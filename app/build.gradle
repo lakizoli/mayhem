@@ -1,4 +1,7 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 apply plugin: 'com.android.model.application'
+
 model {
     android {
         compileSdkVersion = 23
@@ -11,17 +14,15 @@ model {
             versionCode = 1
             versionName = "1.0"
         }
-		
-		compileOptions.with {
-			sourceCompatibility = JavaVersion.VERSION_1_7
-			targetCompatibility = JavaVersion.VERSION_1_7
-		}
+
+        compileOptions.with {
+            sourceCompatibility = JavaVersion.VERSION_1_7
+            targetCompatibility = JavaVersion.VERSION_1_7
+        }
     }
 
     android.ndk {
         moduleName = "game"
-        cppFlags.add("-Werror")
-        ldLibs.addAll(["log", "GLESv1_CM"])
     }
 
     android.buildTypes {
@@ -49,10 +50,10 @@ model {
         create("arm8") {
             ndk.abiFilters.add("arm64-v8a")
         }
-        create("x86-32") {
+        create("x86") {
             ndk.abiFilters.add("x86")
         }
-        create("x86-64") {
+        create("x64") {
             ndk.abiFilters.add("x86_64")
         }
         // for detailed abiFilter descriptions, refer to "Supported ABIs" @
@@ -64,4 +65,176 @@ model {
 }
 
 dependencies {
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Building native libraries
+//////////////////////////////////////////////////////////////////////////////////////////
+class NativeConfig {
+    String command;
+
+    def buildCommand(rootProj, basePath, abiFilter, buildConfig) {
+        //Get NDK directory
+        String ndkdir = null
+        if (System.env.ANDROID_NDK_ROOT != null)
+            ndkdir = System.env.ANDROID_NDK_ROOT
+
+        if (ndkdir == null) {
+            def properties = new Properties()
+            properties.load(rootProj.file('local.properties').newDataInputStream())
+            ndkdir = properties.getProperty('ndk.dir', null)
+        }
+
+        if (ndkdir == null)
+            throw new GradleException("NDK location not found. Define location with ndk.dir in the local.properties file or with an ANDROID_NDK_ROOT environment variable.")
+
+        //Compose command
+        def ndkbuild = ndkdir + "/ndk-build"
+        if (Os.isFamily(Os.FAMILY_WINDOWS))
+            ndkbuild += ".cmd"
+
+        def postProcess
+        if (Os.isFamily(Os.FAMILY_WINDOWS))
+            postProcess = '"&", "after_ndk.bat"'
+        else
+            postProcess = '"&&", "after_ndk.sh"'
+
+        def ndkABIs = "APP_ABI=x86 armeabi-v7a arm64-v8a x86_64"
+        def ndkDebug = "NDK_DEBUG=1"
+        def ndkCFlags = "GAME_CFLAGS=-DIDE_COMPILE -D_DEBUG -g -ggdb -O0"
+        def ndkCPPFlags = "GAME_CFLAGS=-DIDE_COMPILE -D_DEBUG -g -ggdb -O0"
+
+        if (abiFilter == "x86") {
+            ndkABIs = "APP_ABI=x86"
+        } else if (abiFilter == "arm7") {
+            ndkABIs = "APP_ABI=armeabi-v7a"
+        } else if (abiFilter == "arm8") {
+            ndkABIs = "APP_ABI=arm64-v8a"
+        } else if (abiFilter == "x64") {
+            ndkABIs = "APP_ABI=x86_64"
+        } else if (abiFilter == "all") {
+            ndkABIs = "APP_ABI=x86 armeabi-v7a arm64-v8a x86_64"
+        }
+
+        if (buildConfig == "debug") {
+            ndkDebug = "NDK_DEBUG=1"
+            ndkCFlags = "GAME_CFLAGS=-DIDE_COMPILE -D_DEBUG -g -ggdb -O0"
+            ndkCPPFlags = "GAME_CFLAGS=-DIDE_COMPILE -D_DEBUG -g -ggdb -O0"
+            if (Os.isFamily(Os.FAMILY_WINDOWS))
+                postProcess = '"&", "after_ndk.bat"'
+            else
+                postProcess = '"&&", "after_ndk.sh"'
+        } else if (buildConfig == "release") {
+            ndkDebug = "NDK_DEBUG=0"
+            ndkCFlags = "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
+            ndkCPPFlags = "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
+            postProcess = ''
+        }
+
+        this.command = "[\"" + ndkbuild + "\"" +
+                ', "-j8"' +
+                ', "NDK_PROJECT_PATH=../../build/intermediates/ndk"' +
+                ', "NDK_LIBS_OUT=jniLibs"' +
+                ', "APP_BUILD_SCRIPT=jni/Android.mk"' +
+                ', "NDK_APPLICATION_MK=jni/Application.mk"' +
+//                ', "V=1"' +
+                ", \"${ndkABIs}\"" +
+                ", \"${ndkDebug}\"" +
+                ", \"${ndkCFlags}\"" +
+                ", \"${ndkCPPFlags}\"" +
+                ', "-C' + basePath + '"' +
+                ', ' + postProcess +
+                "]"
+    }
+}
+
+task ndkBuildAllDebug(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "all", "debug")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildAllRelease(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "all", "release")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildArm7Debug(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "arm7", "debug")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildArm7Release(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "arm7", "release")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildArm8Debug(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "arm8", "debug")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildArm8Release(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "arm8", "release")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildX86Debug(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "x86", "debug")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildX86Release(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "x86", "release")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildX64Debug(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "x64", "debug")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+task ndkBuildX64Release(type: Exec) {
+    def nativeConfig = new NativeConfig()
+    nativeConfig.buildCommand(project.rootProject, 'src/main', "x64", "release")
+    commandLine Eval.me(nativeConfig.command)
+}
+
+tasks.withType(JavaCompile) {
+    compileTask ->
+        if (compileTask.name.startsWith("compileAllDebugJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildAllDebug
+        } else if (compileTask.name.startsWith("compileAllReleaseJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildAllRelease
+        } else if (compileTask.name.startsWith("compileArm7DebugJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildArm7Debug
+        } else if (compileTask.name.startsWith("compileArm7ReleaseJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildArm7Release
+        } else if (compileTask.name.startsWith("compileArm8DebugJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildArm8Debug
+        } else if (compileTask.name.startsWith("compileArm8ReleaseJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildArm8Release
+        } else if (compileTask.name.startsWith("compileX86DebugJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildX86Debug
+        } else if (compileTask.name.startsWith("compileX86ReleaseJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildX86Release
+        } else if (compileTask.name.startsWith("compileX64DebugJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildX64Debug
+        } else if (compileTask.name.startsWith("compileX64ReleaseJavaWithJavac")) {
+            compileTask.dependsOn ndkBuildX64Release
+        }
+}
+
+tasks.all { task ->
+    if (task.name.contains('Library')) {
+        task.enabled = false
+    }
 }
