@@ -132,20 +132,20 @@ class NativeConfig {
         }
 
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//        this.command = "[\"" + ndkbuild + "\"" +
-//                ', "-j8"' +
-//                ', "NDK_PROJECT_PATH=../../build/intermediates/ndk"' +
-//                ', "NDK_LIBS_OUT=jniLibs"' +
-//                ', "APP_BUILD_SCRIPT=jni/Android.mk"' +
-//                ', "NDK_APPLICATION_MK=jni/Application.mk"' +
-////                ', "V=1"' +
-//                ", \"${ndkABIs}\"" +
-//                ", \"${ndkDebug}\"" +
-//                ", \"${ndkCFlags}\"" +
-//                ", \"${ndkCPPFlags}\"" +
-//                ', "-C' + basePath + '"' +
-//                postProcess +
-//                "]"
+            this.command = "[\"" + ndkbuild + "\"" +
+                    ', "-j8"' +
+                    ', "NDK_PROJECT_PATH=../../build/intermediates/ndk"' +
+                    ', "NDK_LIBS_OUT=jniLibs"' +
+                    ', "APP_BUILD_SCRIPT=jni/Android.mk"' +
+                    ', "NDK_APPLICATION_MK=jni/Application.mk"' +
+//                  ', "V=1"' +
+                    ", \"${ndkABIs}\"" +
+                    ", \"${ndkDebug}\"" +
+                    ", \"${ndkCFlags}\"" +
+                    ", \"${ndkCPPFlags}\"" +
+                    ', "-C' + basePath + '"' +
+                    postProcess +
+                    "]"
         } else {
             this.command = "[\"sh\", \"-c\", \"" + ndkbuild +
                     ' -j8' +
