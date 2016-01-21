@@ -93,11 +93,11 @@ class NativeConfig {
         if (Os.isFamily(Os.FAMILY_WINDOWS))
             ndkbuild += ".cmd"
 
-        def postProcess
+        def postProcess = ""
         if (Os.isFamily(Os.FAMILY_WINDOWS))
-            postProcess = '"&", "after_ndk.bat"'
+            postProcess = ', "&", "after_ndk.bat"'
         else
-            postProcess = '"&&", "after_ndk.sh"'
+            postProcess = ' && ./after_ndk.sh'
 
         def ndkABIs = "APP_ABI=x86 armeabi-v7a arm64-v8a x86_64"
         def ndkDebug = "NDK_DEBUG=1"
@@ -121,9 +121,9 @@ class NativeConfig {
             ndkCFlags = "GAME_CFLAGS=-DIDE_COMPILE -D_DEBUG -g -ggdb -O0"
             ndkCPPFlags = "GAME_CFLAGS=-DIDE_COMPILE -D_DEBUG -g -ggdb -O0"
             if (Os.isFamily(Os.FAMILY_WINDOWS))
-                postProcess = '"&", "after_ndk.bat"'
+                postProcess = ', "&", "after_ndk.bat"'
             else
-                postProcess = '"&&", "after_ndk.sh"'
+                postProcess = ' && ./after_ndk.sh'
         } else if (buildConfig == "release") {
             ndkDebug = "NDK_DEBUG=0"
             ndkCFlags = "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
@@ -131,20 +131,35 @@ class NativeConfig {
             postProcess = ''
         }
 
-        this.command = "[\"" + ndkbuild + "\"" +
-                ', "-j8"' +
-                ', "NDK_PROJECT_PATH=../../build/intermediates/ndk"' +
-                ', "NDK_LIBS_OUT=jniLibs"' +
-                ', "APP_BUILD_SCRIPT=jni/Android.mk"' +
-                ', "NDK_APPLICATION_MK=jni/Application.mk"' +
+//        this.command = "[\"" + ndkbuild + "\"" +
+//                ', "-j8"' +
+//                ', "NDK_PROJECT_PATH=../../build/intermediates/ndk"' +
+//                ', "NDK_LIBS_OUT=jniLibs"' +
+//                ', "APP_BUILD_SCRIPT=jni/Android.mk"' +
+//                ', "NDK_APPLICATION_MK=jni/Application.mk"' +
+////                ', "V=1"' +
+//                ", \"${ndkABIs}\"" +
+//                ", \"${ndkDebug}\"" +
+//                ", \"${ndkCFlags}\"" +
+//                ", \"${ndkCPPFlags}\"" +
+//                ', "-C' + basePath + '"' +
+//                postProcess +
+//                "]"
+
+        this.command = "[\"sh\", \"-c\", \"" + ndkbuild +
+                ' -j8' +
+                ' \\\"NDK_PROJECT_PATH=../../build/intermediates/ndk\\\"' +
+                ' \\\"NDK_LIBS_OUT=jniLibs\\\"' +
+                ' \\\"APP_BUILD_SCRIPT=jni/Android.mk\\\"' +
+                ' \\\"NDK_APPLICATION_MK=jni/Application.mk\\\"' +
 //                ', "V=1"' +
-                ", \"${ndkABIs}\"" +
-                ", \"${ndkDebug}\"" +
-                ", \"${ndkCFlags}\"" +
-                ", \"${ndkCPPFlags}\"" +
-                ', "-C' + basePath + '"' +
-                ', ' + postProcess +
-                "]"
+                " \\\"${ndkABIs}\\\"" +
+                " \\\"${ndkDebug}\\\"" +
+                " \\\"${ndkCFlags}\\\"" +
+                " \\\"${ndkCPPFlags}\\\"" +
+                ' \\\"-C' + basePath + '\\\"' +
+                postProcess +
+                "\"]"
     }
 }
 
@@ -163,6 +178,7 @@ task ndkBuildAllRelease(type: Exec) {
 task ndkBuildArm7Debug(type: Exec) {
     def nativeConfig = new NativeConfig()
     nativeConfig.buildCommand(project.rootProject, 'src/main', "arm7", "debug")
+    println nativeConfig.command
     commandLine Eval.me(nativeConfig.command)
 }
 
