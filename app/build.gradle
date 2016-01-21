@@ -131,6 +131,7 @@ class NativeConfig {
             postProcess = ''
         }
 
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
 //        this.command = "[\"" + ndkbuild + "\"" +
 //                ', "-j8"' +
 //                ', "NDK_PROJECT_PATH=../../build/intermediates/ndk"' +
@@ -145,21 +146,22 @@ class NativeConfig {
 //                ', "-C' + basePath + '"' +
 //                postProcess +
 //                "]"
-
-        this.command = "[\"sh\", \"-c\", \"" + ndkbuild +
-                ' -j8' +
-                ' \\\"NDK_PROJECT_PATH=../../build/intermediates/ndk\\\"' +
-                ' \\\"NDK_LIBS_OUT=jniLibs\\\"' +
-                ' \\\"APP_BUILD_SCRIPT=jni/Android.mk\\\"' +
-                ' \\\"NDK_APPLICATION_MK=jni/Application.mk\\\"' +
-//                ', "V=1"' +
-                " \\\"${ndkABIs}\\\"" +
-                " \\\"${ndkDebug}\\\"" +
-                " \\\"${ndkCFlags}\\\"" +
-                " \\\"${ndkCPPFlags}\\\"" +
-                ' \\\"-C' + basePath + '\\\"' +
-                postProcess +
-                "\"]"
+        } else {
+            this.command = "[\"sh\", \"-c\", \"" + ndkbuild +
+                    ' -j8' +
+                    ' \\\"NDK_PROJECT_PATH=../../build/intermediates/ndk\\\"' +
+                    ' \\\"NDK_LIBS_OUT=jniLibs\\\"' +
+                    ' \\\"APP_BUILD_SCRIPT=jni/Android.mk\\\"' +
+                    ' \\\"NDK_APPLICATION_MK=jni/Application.mk\\\"' +
+//                  ', "V=1"' +
+                    " \\\"${ndkABIs}\\\"" +
+                    " \\\"${ndkDebug}\\\"" +
+                    " \\\"${ndkCFlags}\\\"" +
+                    " \\\"${ndkCPPFlags}\\\"" +
+                    ' \\\"-C' + basePath + '\\\"' +
+                    postProcess +
+                    "\"]"
+        }
     }
 }
 
@@ -178,7 +180,6 @@ task ndkBuildAllRelease(type: Exec) {
 task ndkBuildArm7Debug(type: Exec) {
     def nativeConfig = new NativeConfig()
     nativeConfig.buildCommand(project.rootProject, 'src/main', "arm7", "debug")
-    println nativeConfig.command
     commandLine Eval.me(nativeConfig.command)
 }
 
