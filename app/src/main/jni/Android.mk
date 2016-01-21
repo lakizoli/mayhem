@@ -4,6 +4,7 @@
 
 LOCAL_PATH := $(abspath $(call my-dir))
 
+#libgame.so
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := game
@@ -27,7 +28,7 @@ LOCAL_CPP_EXTENSION := .cpp
 LOCAL_SRC_FILES +=					\
 	gl_code.cpp
 
-#LOCAL_SHARED_LIBRARIES :=
+LOCAL_SHARED_LIBRARIES := c64emu
 #LOCAL_STATIC_LIBRARIES :=
 
 LOCAL_LDLIBS := -llog -lGLESv1_CM -landroid
