@@ -1,1 +1,0 @@
-xcopy build\intermediates\ndk\obj\local src\main\jniLibs /s /y /h /r /c /U /F
