@@ -277,7 +277,9 @@ class GLView extends GLSurfaceView {
 		}
 
 		public void onSurfaceChanged (GL10 gl, int width, int height) {
-			GameLib.init (width, height);
+			int refWidth = width > height ? 1920 : 1080;
+			int refHeight = width > height ? 1080 : 1920;
+			GameLib.init (width, height, refWidth, refHeight);
 		}
 
 		public void onSurfaceCreated (GL10 gl, EGLConfig config) {
