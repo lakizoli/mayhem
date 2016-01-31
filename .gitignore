@@ -2,6 +2,7 @@
 .gradle
 .idea
 app/app.iml
+app/mayhem.iml
 app/build
 app/src/main/jniLibs/
 local.properties
