@@ -45,3 +45,37 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 	//Render the game
 	g_engine.game->Render ();
 }
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_hasPointerID (JNIEnv* env, jclass clazz, jint id) {
+	return g_engine.pointerIDs && g_engine.pointerIDs->find (id) != g_engine.pointerIDs->end () ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_insertPointerID (JNIEnv* env, jclass clazz, jint id) {
+	if (g_engine.pointerIDs) {
+		g_engine.pointerIDs->insert (id);
+	}
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_erasePointerID (JNIEnv* env, jclass clazz, jint id) {
+	if (g_engine.pointerIDs) {
+		g_engine.pointerIDs->erase (id);
+	}
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchDown (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
+	if (g_engine.game) {
+		g_engine.game->TouchDown (id, x, y);
+	}
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchUp (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
+	if (g_engine.game) {
+		g_engine.game->TouchUp (id, x, y);
+	}
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchMove (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
+	if (g_engine.game) {
+		g_engine.game->TouchMove (id, x, y);
+	}
+}

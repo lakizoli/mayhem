@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -25,6 +26,7 @@ class GLView extends GLSurfaceView {
 		init (translucent, depth, stencil);
 	}
 
+	//region init functions
 	private void init (boolean translucent, int depth, int stencil) {
 
         /* By default, GLSurfaceView() creates a RGB_565 opaque surface.
@@ -270,6 +272,7 @@ class GLView extends GLSurfaceView {
 		protected int mStencilSize;
 		private int[] mValue = new int[1];
 	}
+	//endregion
 
 	private static class Renderer implements GLSurfaceView.Renderer {
 		public void onDrawFrame (GL10 gl) {
@@ -286,4 +289,38 @@ class GLView extends GLSurfaceView {
 			// Do nothing.
 		}
 	}
+
+	//region touch handlers
+	@Override
+	public boolean onTouchEvent (MotionEvent event) {
+		int action = event.getAction ();
+		int pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+		//LOGD ("OnTouchEvent (Raw) -> action: %d, idx: %d, id: %d, x: %.2f, y: %.2f", action, pointerIndex, AMotionEvent_getPointerId (event, pointerIndex), AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+		if (action == MotionEvent.ACTION_DOWN || (action & MotionEvent.ACTION_POINTER_DOWN) == MotionEvent.ACTION_POINTER_DOWN) {
+			int id = event.getPointerId (pointerIndex);
+			if (!GameLib.hasPointerID (id)) {
+				//LOGD ("OnTouchEvent (Down) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+				GameLib.insertPointerID (id);
+				GameLib.touchDown (id, event.getX (pointerIndex), event.getY (pointerIndex));
+			}
+		} else if (action == MotionEvent.ACTION_UP || (action & MotionEvent.ACTION_POINTER_UP) == MotionEvent.ACTION_POINTER_UP) {
+			int id = event.getPointerId (pointerIndex);
+			if (GameLib.hasPointerID (id)) {
+				//LOGD ("OnTouchEvent (Up) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+				GameLib.erasePointerID (id);
+				GameLib.touchUp (id, event.getX (pointerIndex), event.getY (pointerIndex));
+			}
+		} else if (action == MotionEvent.ACTION_MOVE) {
+			for (int i = 0, iEnd = event.getPointerCount (); i < iEnd; ++i) {
+				int id = event.getPointerId (i);
+				if (GameLib.hasPointerID (id)) {
+					//LOGD ("OnTouchEvent (Move) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+					GameLib.touchMove (id, event.getX (i), event.getY (i));
+				}
+			}
+		}
+
+		return true; //super.onTouchEvent (event);
+	}
+	//endregion
 }
