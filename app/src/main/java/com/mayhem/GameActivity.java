@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,6 +25,10 @@ public class GameActivity extends Activity {
 
 		mView = new GLView (getApplication ());
 		setContentView (mView);
+
+		View overlayView = getLayoutInflater ().inflate (R.layout.sample_overlay_view, null);
+		ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams (ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+		addContentView (overlayView, layoutParams);
 
 		//Setup game overlays
 
