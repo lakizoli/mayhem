@@ -4,5 +4,6 @@
 app/app.iml
 mayhem.iml
 app/build
+build
 app/src/main/jniLibs/
 local.properties
