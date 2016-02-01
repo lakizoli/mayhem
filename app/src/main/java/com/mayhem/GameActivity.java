@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 
 public class GameActivity extends Activity {
 	GLView mView;
+	Thread mEmulatorThread;
 
 	static {
 		System.loadLibrary ("c64emu");
@@ -23,7 +24,14 @@ public class GameActivity extends Activity {
 		super.onCreate (icicle);
 		init (getAssets ());
 
-		mView = new GLView (getApplication ());
+		mEmulatorThread = new Thread () {
+			@Override
+			public void run () {
+				GameLib.runEmulator ();
+			}
+		};
+
+		mView = new GLView (getApplication (), mEmulatorThread);
 		setContentView (mView);
 
 		View overlayView = getLayoutInflater ().inflate (R.layout.sample_overlay_view, null);
@@ -47,6 +55,12 @@ public class GameActivity extends Activity {
 //					//.addTestDevice("657B606D88C7789A95533151364832AC") //Nexus 9 tablet
 //					.build();
 //			_adView.loadAd(adRequest);
+		}
+
+		//Init Game Environment
+		if (!GameLib.initEnvironment (getApplication ())) {
+			//TODO: ... valami alert, mert nem tudunk elindulni ...
+			return;
 		}
 	}
 

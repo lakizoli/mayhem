@@ -1,9 +1,12 @@
 #include "pch.h"
-#include "jnihelper/jniload.h"
+#include "jnihelper/JavaString.h"
 #include "engine.h"
 #include "game/mayhemgame.h"
 #include "platform/androidcontentmanager.h"
 #include "platform/androidutil.h"
+
+//c64emu declarations
+extern "C" int main_program (int argc, char **argv);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Game data
@@ -78,4 +81,40 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchMove (JNIEnv* env
 	if (g_engine.game) {
 		g_engine.game->TouchMove (id, x, y);
 	}
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *env, jclass clazz, jstring exePath, jstring diskPath) {
+	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine must be initialized before start emulator (pointerIDs)!");
+	CHECKMSG (g_engine.util != nullptr, "g_engine must be initialized before start emulator (util)!");
+	CHECKMSG (g_engine.contentManager != nullptr, "g_engine must be initialized before start emulator (contentManager)!");
+	CHECKMSG (g_engine.game != nullptr, "g_engine must be initialized before start emulator (game)!");
+
+	CHECKMSG (exePath != nullptr, "exePath cannot be null!");
+	CHECKMSG (diskPath != nullptr, "diskPath cannot be null!");
+
+	string&& exe = JavaString (exePath).getString ();
+	CHECKMSG (exe.length () > 0, "exePath cannot be empty!");
+
+	string&& disk = JavaString (diskPath).getString ();
+	CHECKMSG (disk.length () > 0, "diskPath cannot be empty!");
+
+	//Compose parameters of the emulator
+	char* exeBuffer = new char[exe.length () + 1];
+	strcpy (&exeBuffer[0], exe.c_str ());
+
+	char* diskBuffer = new char[disk.length () + 1];
+	strcpy (&diskBuffer[0], disk.c_str ());
+
+	char* argv[2] = { exeBuffer, diskBuffer };
+	int argc = sizeof (argv) / sizeof (argv[0]);
+
+	//Call main function of emulator
+	int res = main_program (argc, argv);
+
+	//Clear allocated memory
+	delete [] diskBuffer;
+	diskBuffer = nullptr;
+
+	delete [] exeBuffer;
+	exeBuffer = nullptr;
 }

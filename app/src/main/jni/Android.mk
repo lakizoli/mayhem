@@ -1,8 +1,18 @@
 #############################
-# libgame.so (main module)
+# c64emu (prebuilt module)
 #############################
 
 LOCAL_PATH := $(abspath $(call my-dir))
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := c64emu-prebuilt
+LOCAL_SRC_FILES := ../../../build/intermediates/c64/$(TARGET_ARCH_ABI)/libc64emu.so
+
+include $(PREBUILT_SHARED_LIBRARY)
+
+#############################
+# libgame.so (main module)
+#############################
 
 #libgame.so
 include $(CLEAR_VARS)
@@ -34,7 +44,7 @@ LOCAL_SRC_FILES +=						\
 	jni_GameActivity.cpp				\
 	jni_GameLib.cpp
 
-LOCAL_SHARED_LIBRARIES := c64emu
+LOCAL_SHARED_LIBRARIES := c64emu-prebuilt
 #LOCAL_STATIC_LIBRARIES :=
 
 LOCAL_LDLIBS := -llog -lGLESv1_CM -lEGL -landroid -ljnigraphics -lOpenSLES

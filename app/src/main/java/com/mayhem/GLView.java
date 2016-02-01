@@ -16,19 +16,18 @@ class GLView extends GLSurfaceView {
 	private static String TAG = "GLView";
 	private static final boolean DEBUG = false;
 
-	public GLView (Context context) {
+	public GLView (Context context, Thread emulatorThread) {
 		super (context);
-		init (false, 0, 0);
+		init (emulatorThread, false, 0, 0);
 	}
 
-	public GLView (Context context, boolean translucent, int depth, int stencil) {
+	public GLView (Context context, Thread emulatorThread, boolean translucent, int depth, int stencil) {
 		super (context);
-		init (translucent, depth, stencil);
+		init (emulatorThread, translucent, depth, stencil);
 	}
 
 	//region init functions
-	private void init (boolean translucent, int depth, int stencil) {
-
+	private void init (Thread emulatorThread, boolean translucent, int depth, int stencil) {
         /* By default, GLSurfaceView() creates a RGB_565 opaque surface.
 		 * If we want a translucent one, we should change the surface's
          * format here, using PixelFormat.TRANSLUCENT for GL Surfaces
@@ -53,7 +52,7 @@ class GLView extends GLSurfaceView {
 				new ConfigChooser (5, 6, 5, 0, depth, stencil));
 
         /* Set the renderer responsible for frame rendering */
-		setRenderer (new Renderer ());
+		setRenderer (new Renderer (emulatorThread));
 	}
 
 	private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
@@ -275,6 +274,13 @@ class GLView extends GLSurfaceView {
 	//endregion
 
 	private static class Renderer implements GLSurfaceView.Renderer {
+		private Thread mEmulatorThread;
+
+		public Renderer (Thread emulatorThread) {
+			super ();
+			mEmulatorThread = emulatorThread;
+		}
+
 		public void onDrawFrame (GL10 gl) {
 			GameLib.step ();
 		}
@@ -283,6 +289,9 @@ class GLView extends GLSurfaceView {
 			int refWidth = width > height ? 1920 : 1080;
 			int refHeight = width > height ? 1080 : 1920;
 			GameLib.init (width, height, refWidth, refHeight);
+
+			//Starting the c64 emulator in a background thread
+			mEmulatorThread.start ();
 		}
 
 		public void onSurfaceCreated (GL10 gl, EGLConfig config) {
