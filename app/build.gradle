@@ -1,70 +1,84 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
-apply plugin: 'com.android.model.application'
+apply plugin: 'com.android.application'
 
-model {
-    android {
-        compileSdkVersion = 23
-        buildToolsVersion = "23.0.2"
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
 
-        defaultConfig.with {
-            applicationId = "com.mayhem"
-            minSdkVersion.apiLevel = 15
-            targetSdkVersion.apiLevel = 23
-            versionCode = 1
-            versionName = "1.0"
-        }
-
-        compileOptions.with {
-            sourceCompatibility = JavaVersion.VERSION_1_7
-            targetCompatibility = JavaVersion.VERSION_1_7
-        }
+    defaultConfig {
+        applicationId "com.mayhem"
+        minSdkVersion 9
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
     }
 
-    android.ndk {
-        moduleName = "game"
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
     }
 
-    android.buildTypes {
+    signingConfigs {
         release {
-            minifyEnabled = false
-            proguardFiles.add(file('proguard-rules.txt'))
-            signingConfig = $("android.signingConfigs.release")
+            keyAlias 'zlaki.games'
+            keyPassword 'natureq1w2e3'
+            storeFile file('../../zlaki.games.keystore')
+            storePassword 'natureq1w2e3'
+            storeType "jks"
         }
     }
 
-    android.signingConfigs {
-        create("release") {
-            keyAlias = 'zlaki.games'
-            keyPassword = 'natureq1w2e3'
-            storeFile = file('../../zlaki.games.keystore')
-            storePassword = 'natureq1w2e3'
-            storeType = "jks"
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            debuggable true
+            jniDebuggable true
         }
     }
 
-    android.productFlavors {
-        create("arm7") {
-            ndk.abiFilters.add("armeabi-v7a")
+    flavorDimensions "abi"
+    productFlavors {
+        arm7 {
+            dimension "abi"
+            ndk {
+                abiFilter "armeabi-v7a"
+            }
         }
-        create("arm8") {
-            ndk.abiFilters.add("arm64-v8a")
+        arm8 {
+            dimension "abi"
+            ndk {
+                abiFilter "arm64-v8a"
+            }
         }
-        create("x86") {
-            ndk.abiFilters.add("x86")
+        x86 {
+            dimension "abi"
+            ndk {
+                abiFilter "x86"
+            }
         }
-        create("x64") {
-            ndk.abiFilters.add("x86_64")
+        x64 {
+            dimension "abi"
+            ndk {
+                abiFilter "x86_64"
+            }
         }
         // for detailed abiFilter descriptions, refer to "Supported ABIs" @
         // https://developer.android.com/ndk/guides/abis.html#sa
 
         // build one including all cpu architectures
-        create("all")
+        allPlatform {
+            dimension "abi"
+        }
     }
 }
 
 dependencies {
+    compile 'com.google.android.gms:play-services-ads:8.4.0'
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -410,41 +424,41 @@ task ndkBuildX64Release(type: Exec) {
 
 tasks.withType(JavaCompile) {
     compileTask ->
-        if (compileTask.name.startsWith("compileAllDebugJavaWithJavac")) {
+        if (compileTask.name.startsWith("compileAllPlatformDebugJava")) {
             ndkBuildAllDebug.dependsOn ndkBuildEmuAllDebug
             compileTask.dependsOn ndkBuildAllDebug
-        } else if (compileTask.name.startsWith("compileAllReleaseJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileAllPlatformReleaseJava")) {
             ndkBuildAllRelease.dependsOn ndkBuildEmuAllRelease
             compileTask.dependsOn ndkBuildAllRelease
-        } else if (compileTask.name.startsWith("compileArm7DebugJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileArm7DebugJava")) {
             ndkBuildArm7Debug.dependsOn ndkBuildEmuArm7Debug
             compileTask.dependsOn ndkBuildArm7Debug
-        } else if (compileTask.name.startsWith("compileArm7ReleaseJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileArm7ReleaseJava")) {
             ndkBuildArm7Release.dependsOn ndkBuildEmuArm7Release
             compileTask.dependsOn ndkBuildArm7Release
-        } else if (compileTask.name.startsWith("compileArm8DebugJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileArm8DebugJava")) {
             ndkBuildArm8Debug.dependsOn ndkBuildEmuArm8Debug
             compileTask.dependsOn ndkBuildArm8Debug
-        } else if (compileTask.name.startsWith("compileArm8ReleaseJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileArm8ReleaseJava")) {
             ndkBuildArm8Release.dependsOn ndkBuildEmuArm8Release
             compileTask.dependsOn ndkBuildArm8Release
-        } else if (compileTask.name.startsWith("compileX86DebugJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileX86DebugJava")) {
             ndkBuildX86Debug.dependsOn ndkBuildEmuX86Debug
             compileTask.dependsOn ndkBuildX86Debug
-        } else if (compileTask.name.startsWith("compileX86ReleaseJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileX86ReleaseJava")) {
             ndkBuildX86Release.dependsOn ndkBuildEmuX86Release
             compileTask.dependsOn ndkBuildX86Release
-        } else if (compileTask.name.startsWith("compileX64DebugJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileX64DebugJava")) {
             ndkBuildX64Debug.dependsOn ndkBuildEmuX64Debug
             compileTask.dependsOn ndkBuildX64Debug
-        } else if (compileTask.name.startsWith("compileX64ReleaseJavaWithJavac")) {
+        } else if (compileTask.name.startsWith("compileX64ReleaseJava")) {
             ndkBuildX64Release.dependsOn ndkBuildEmuX64Release
             compileTask.dependsOn ndkBuildX64Release
         }
 }
 
 tasks.all { task ->
-    if (task.name.contains('Library')) {
+    if (task.name.startsWith('compile') && task.name.endsWith('Ndk')) {
         task.enabled = false
     }
 }
