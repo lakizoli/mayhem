@@ -14,6 +14,9 @@ extern "C" void video_android_set_init_callback (t_fn_init_canvas init_canvas);
 typedef void (*t_fn_lock_canvas) ();
 extern "C" void video_android_set_locking_callbacks (t_fn_lock_canvas lock_canvas, t_fn_lock_canvas unlock_canvas);
 
+typedef void (*t_fn_speed_callback) (double speed, double frame_rate, int warp_enabled);
+extern "C" void vsyncarch_android_set_speed_callback (t_fn_speed_callback fn_speed_callback);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Game data
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,6 +54,19 @@ static void LockCanvas () {
 static void UnlockCanvas () {
 	g_engine.canvas_dirty = true;
 	g_engine.canvas_lock.unlock ();
+}
+
+static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
+	static int last_fps = -1;
+
+	int fps = (int)frame_rate;
+	if (fps != last_fps) {
+		last_fps = fps;
+
+		stringstream ss;
+		ss << "FPS: " << fps;
+		Game::ContentManager ().DisplayStatus (ss.str ());
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,7 +172,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	char* diskBuffer = new char[disk.length () + 1];
 	strcpy (&diskBuffer[0], disk.c_str ());
 
-	char* argv[1] = { exeBuffer /*, diskBuffer*/ };
+	char* argv[] = { exeBuffer, diskBuffer };
 	int argc = sizeof (argv) / sizeof (argv[0]);
 
 	//Change working directory to exe dir
@@ -173,6 +189,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	//Set callbacks of engine
 	video_android_set_init_callback (&InitCanvas);
 	video_android_set_locking_callbacks (&LockCanvas, &UnlockCanvas);
+	vsyncarch_android_set_speed_callback (&DisplaySpeed);
 
 	//Call main function of emulator
 	int res = main_program (argc, argv);

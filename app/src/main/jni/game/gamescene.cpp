@@ -36,24 +36,29 @@ void GameScene::Update (float elapsedTime) {
 			//Trim screen pixel buffer to visible size (convert BGR to RGB)
 			assert (g_engine.visible_height <= g_engine.canvas_height);
 
-			//TODO: ... hqnx scale
+			//TODO: ... hqnx scale (if needed...)
 
 			uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
 			uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
 			uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
 			vector<uint8_t> pixels (pitch_dest * g_engine.visible_height);
 
-			for (uint32_t y = 0;y < g_engine.visible_height;++y) {
-				uint32_t offset_src_line = y * pitch_src;
-				uint32_t offset_dest_line = y * pitch_dest;
+			for (uint32_t y = 0, yEnd = g_engine.visible_height;y < yEnd;++y) {
+				uint32_t* src_pixel = (uint32_t*) (&g_engine.canvas[y * pitch_src]);
+				uint32_t* dst_pixel = (uint32_t*) (&pixels[y * pitch_dest]);
 
-				for (uint32_t x = 0;x < g_engine.visible_width;++x) {
-					uint32_t offset_src = offset_src_line + x * bytePerPixel;
-					uint32_t offset_dest = offset_dest_line + x * bytePerPixel;
+				for (uint32_t x = 0, xEnd = g_engine.visible_width;x < xEnd;x += 4) {
+					uint32_t src = *src_pixel++;
+					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
 
-					pixels[offset_dest + 0] = g_engine.canvas[offset_src + 2];
-					pixels[offset_dest + 1] = g_engine.canvas[offset_src + 1];
-					pixels[offset_dest + 2] = g_engine.canvas[offset_src + 0];
+					src = *src_pixel++;
+					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+
+					src = *src_pixel++;
+					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+
+					src = *src_pixel++;
+					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
 				}
 			}
 

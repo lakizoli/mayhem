@@ -27,6 +27,8 @@ public:
 	virtual string ReadFile (const string& fileName) const override;
 	virtual void WriteFile (const string& fileName, const string& content) override;
 
+	virtual void DisplayStatus (const string& status) const override;
+
 private:
 	jobject openAsset (const string& asset) const;
 	void closeStream (jobject istream) const;

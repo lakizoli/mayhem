@@ -25,6 +25,7 @@ class JNI_ContentManager {
 		mInitAdMobMethod (nullptr),
 		mReadFileMethod (nullptr),
 		mWriteFileMethod (nullptr),
+		mDisplayStatusMethod (nullptr),
 		mActivity (nullptr),
 		mAssetManager (nullptr) {
 	}
@@ -76,6 +77,7 @@ class JNI_ContentManager {
 		mInitAdMobMethod = JNI::GetMethod (clazzActivity, "initAdMob", "()V");
 		mReadFileMethod = JNI::GetMethod (clazzActivity, "readFile", "(Ljava/lang/String;)Ljava/lang/String;");
 		mWriteFileMethod = JNI::GetMethod (clazzActivity, "writeFile", "(Ljava/lang/String;Ljava/lang/String;)V");
+		mDisplayStatusMethod = JNI::GetMethod (clazzActivity, "displayStatus", "(Ljava/lang/String;)V");
 	}
 
 	void Release () {
@@ -102,6 +104,7 @@ class JNI_ContentManager {
 		mInitAdMobMethod = nullptr;
 		mReadFileMethod = nullptr;
 		mWriteFileMethod = nullptr;
+		mDisplayStatusMethod = nullptr;
 	}
 
 	//private:
@@ -118,6 +121,7 @@ class JNI_ContentManager {
 	jmethodID mInitAdMobMethod;
 	jmethodID mReadFileMethod;
 	jmethodID mWriteFileMethod;
+	jmethodID mDisplayStatusMethod;
 
 	jobject mActivity; ///< The java instance of the Activity.
 	jobject mAssetManager; ///< The java instance of the AssetManager;
@@ -229,6 +233,12 @@ void AndroidContentManager::WriteFile (const string& fileName, const string& con
 	JNIEnv* env = JNI::GetEnv ();
 	env->CallVoidMethod (jni.mActivity, jni.mWriteFileMethod, JavaString (fileName).get (), JavaString (content).get ());
 	CHECKARG (!env->ExceptionCheck (), "Cannot write file, Java exception occured!");
+}
+
+void AndroidContentManager::DisplayStatus (const string& status) const {
+	JNI_ContentManager& jni = JNI_ContentManager::Get ();
+	JNIEnv* env = JNI::GetEnv ();
+	env->CallVoidMethod (jni.mActivity, jni.mDisplayStatusMethod, JavaString (status).get ());
 }
 
 jobject AndroidContentManager::openAsset (const string & asset) const {

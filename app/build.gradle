@@ -216,8 +216,8 @@ task ndkBuildEmuAllRelease(type: Exec) {
     nativeConfig.postProcessEmu(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "all", "release", "../../../../vice-2.4-android/android"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O1"
-            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O1")
+            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O3"
+            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -238,8 +238,8 @@ task ndkBuildEmuArm7Release(type: Exec) {
     nativeConfig.postProcessEmu(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "arm7", "release", "../../../../vice-2.4-android/android"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O1"
-            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O1")
+            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O3"
+            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -260,8 +260,8 @@ task ndkBuildEmuArm8Release(type: Exec) {
     nativeConfig.postProcessEmu(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "arm8", "release", "../../../../vice-2.4-android/android"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O1"
-            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O1")
+            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O3"
+            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -282,8 +282,8 @@ task ndkBuildEmuX86Release(type: Exec) {
     nativeConfig.postProcessEmu(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "x86", "release", "../../../../vice-2.4-android/android"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O1"
-            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O1")
+            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O3"
+            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -304,8 +304,8 @@ task ndkBuildEmuX64Release(type: Exec) {
     nativeConfig.postProcessEmu(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "x64", "release", "../../../../vice-2.4-android/android"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O1"
-            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O1")
+            , "VICE_CFLAGS=-DIDE_COMPILE -D_DEBUG -O3"
+            , "VICE_CPPFLAGS=-DIDE_COMPILE -D_DEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -329,8 +329,8 @@ task ndkBuildAllRelease(type: Exec) {
     nativeConfig.postProcessGame(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "all", "release", "jni"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
-            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O1")
+            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O3"
+            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -351,8 +351,8 @@ task ndkBuildArm7Release(type: Exec) {
     nativeConfig.postProcessGame(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "arm7", "release", "jni"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
-            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O1")
+            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O3"
+            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -373,8 +373,8 @@ task ndkBuildArm8Release(type: Exec) {
     nativeConfig.postProcessGame(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "arm8", "release", "jni"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
-            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O1")
+            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O3"
+            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -395,8 +395,8 @@ task ndkBuildX86Release(type: Exec) {
     nativeConfig.postProcessGame(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "x86", "release", "jni"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
-            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O1")
+            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O3"
+            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 
@@ -417,8 +417,8 @@ task ndkBuildX64Release(type: Exec) {
     nativeConfig.postProcessGame(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "x64", "release", "jni"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O1"
-            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O1")
+            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O3"
+            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O3")
     commandLine Eval.me(nativeConfig.command)
 }
 

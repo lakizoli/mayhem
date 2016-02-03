@@ -24,4 +24,6 @@ public:
 
 	virtual string ReadFile (const string& fileName) const = 0;
 	virtual void WriteFile (const string& fileName, const string& content) = 0;
+
+	virtual void DisplayStatus (const string& status) const = 0;
 };

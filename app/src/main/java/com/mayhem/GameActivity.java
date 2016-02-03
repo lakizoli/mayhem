@@ -6,6 +6,7 @@ import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,6 +14,8 @@ import java.io.FileOutputStream;
 public class GameActivity extends Activity {
 	GLView mView;
 	Thread mEmulatorThread;
+
+	TextView mStatusLine;
 
 	static {
 		System.loadLibrary ("c64emu");
@@ -37,6 +40,8 @@ public class GameActivity extends Activity {
 		View overlayView = getLayoutInflater ().inflate (R.layout.sample_overlay_view, null);
 		ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams (ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		addContentView (overlayView, layoutParams);
+
+		mStatusLine = (TextView) findViewById (R.id.status_text);
 
 		//Setup game overlays
 
@@ -118,7 +123,7 @@ public class GameActivity extends Activity {
 	public void writeFile (String fileName, String content) {
 		FileOutputStream outputStream = null;
 		try {
-			outputStream = openFileOutput(fileName, Context.MODE_PRIVATE);
+			outputStream = openFileOutput (fileName, Context.MODE_PRIVATE);
 			outputStream.write(content.getBytes());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -130,6 +135,16 @@ public class GameActivity extends Activity {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void displayStatus (final String status) {
+		runOnUiThread (new Runnable () {
+			   @Override
+			   public void run () {
+				   mStatusLine.setText (status);
+			   }
+		   }
+		);
 	}
 	//endregion
 }
