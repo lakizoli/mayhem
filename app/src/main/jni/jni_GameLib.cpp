@@ -8,7 +8,7 @@
 //c64emu declarations
 extern "C" int main_program (int argc, char **argv);
 
-typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* pitch);
+typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint32_t visible_width, uint32_t visible_height, uint8_t** buffer, uint32_t* pitch);
 extern "C" void video_android_set_init_callback (t_fn_init_canvas init_canvas);
 
 typedef void (*t_fn_lock_canvas) ();
@@ -19,7 +19,7 @@ extern "C" void video_android_set_locking_callbacks (t_fn_lock_canvas lock_canva
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 engine_s g_engine; ///< The one and only global object of the game!
 
-static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* pitch) {
+static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint32_t visible_width, uint32_t visible_height, uint8_t** buffer, uint32_t* pitch) {
 	CHECKMSG (buffer != nullptr, "InitCanvas () - buffer cannot be nullptr!");
 	CHECKMSG (pitch != nullptr, "InitCanvas () - pitch cannot be nullptr!");
 
@@ -29,6 +29,9 @@ static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** 
 	g_engine.canvas_height = height;
 	g_engine.canvas_bit_per_pixel = bpp;
 	g_engine.canvas_pitch = width * bytePerPixel;
+
+	g_engine.visible_width = visible_width;
+	g_engine.visible_height = visible_height;
 
 	*pitch = g_engine.canvas_pitch;
 
@@ -70,6 +73,9 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 	g_engine.canvas_height = 0;
 	g_engine.canvas_bit_per_pixel = 0;
 	g_engine.canvas_pitch = 0;
+
+	g_engine.visible_width = 0;
+	g_engine.visible_height = 0;
 
 	g_engine.canvas_dirty = false;
 

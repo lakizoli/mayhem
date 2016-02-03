@@ -11,7 +11,7 @@ void GameScene::Init (int width, int height) {
 }
 
 void GameScene::Shutdown () {
-	if (mC64Screen != nullptr)
+	if (mC64Screen)
 		mC64Screen->Shutdown ();
 	mC64Screen.reset ();
 }
@@ -20,31 +20,50 @@ void GameScene::Resize (int newWidth, int newHeight) {
 }
 
 void GameScene::Update (float elapsedTime) {
-	if (mC64Screen == nullptr && g_engine.canvas_inited) {
-		mC64Screen.reset (new TexAnimMesh (g_engine.canvas_width, g_engine.canvas_height, 24));
+	//Create C64 screen texture
+	if (!mC64Screen && g_engine.canvas_inited) {
+		mC64Screen.reset (new TexAnimMesh (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel));
 		mC64Screen->Init ();
 		mC64Screen->Pos = Vector2D (0.5f, 0.5f);
 		mC64Screen->Scale = Vector2D (0.45f, 0.45f);
 	}
+
+	//Update C64 screen texture
+	if (mC64Screen) {
+		if (g_engine.canvas_dirty) {
+			lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+
+			//Trim screen pixel buffer to visible size
+			assert (g_engine.visible_height <= g_engine.canvas_height);
+
+			//TODO: ... hqnx scale
+
+			uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
+			uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
+			uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
+			vector<uint8_t> pixels (pitch_dest * g_engine.visible_height);
+			for (uint32_t y = 0;y < g_engine.visible_height;++y) {
+				uint32_t offset_src = y * pitch_src;
+				uint32_t offset_dest = y * pitch_dest;
+				memcpy (&pixels[offset_dest], &g_engine.canvas[offset_src], pitch_dest);
+			}
+
+			mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &pixels[0]);
+			g_engine.canvas_dirty = false;
+		}
+	}
 }
 
 void GameScene::Render () {
-	glClearColor (1.0f, 0.5f, 0.5f, 1.0f);
-	//glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
+	//glClearColor (1.0f, 0.5f, 0.5f, 1.0f);
+	glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
 	glClear (GL_COLOR_BUFFER_BIT);
 
 	glMatrixMode (GL_MODELVIEW);
 	glLoadIdentity ();
 
-	if (mC64Screen != nullptr) {
-		if (g_engine.canvas_dirty) {
-			lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
-			mC64Screen->SetPixels (g_engine.canvas_width, g_engine.canvas_height, g_engine.canvas_bit_per_pixel, &g_engine.canvas[0]);
-			g_engine.canvas_dirty = false;
-		}
-
+	if (mC64Screen)
 		mC64Screen->Render ();
-	}
 }
 
 void GameScene::TouchDown (int fingerID, float x, float y) {

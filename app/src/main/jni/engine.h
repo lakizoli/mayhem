@@ -21,6 +21,9 @@ struct engine_s {
 	uint32_t canvas_bit_per_pixel;
 	uint32_t canvas_pitch;
 
+	uint32_t visible_width;
+	uint32_t visible_height;
+
 	vector<uint8_t> canvas;
 	volatile bool canvas_dirty;
 };
