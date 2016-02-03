@@ -83,7 +83,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchMove (JNIEnv* env
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *env, jclass clazz, jstring exePath, jstring diskPath) {
+extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *env, jclass clazz, jstring exePath, jstring diskPath) {
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine must be initialized before start emulator (pointerIDs)!");
 	CHECKMSG (g_engine.util != nullptr, "g_engine must be initialized before start emulator (util)!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine must be initialized before start emulator (contentManager)!");
@@ -108,6 +108,17 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	char* argv[2] = { exeBuffer, diskBuffer };
 	int argc = sizeof (argv) / sizeof (argv[0]);
 
+	//Change working directory to exe dir
+	size_t pos = exe.find_last_of ('/');
+	if (pos != string::npos) {
+		string dir = exe.substr (0, pos);
+		int res = chdir (dir.c_str ());
+		if (res != 0) {
+			LOGE ("GameLib::runEmulator () - Cannot set working directory! error code: %d", res);
+			return -1;
+		}
+	}
+
 	//Call main function of emulator
 	int res = main_program (argc, argv);
 
@@ -117,4 +128,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 
 	delete [] exeBuffer;
 	exeBuffer = nullptr;
+
+	return res;
 }

@@ -26,10 +26,13 @@ public class GameLib {
 	public static void runEmulator () {
 		String exePath = combinePath (mDataPath, "x86.exe");
 		String diskPath = combinePath (mDataPath, "game.d64");
-		runEmulator (exePath, diskPath);
+		int res = runEmulator (exePath, diskPath);
+		if (res < 0) {
+			//...
+		}
 	}
 
-	private static native void runEmulator (String exePath, String diskPath);
+	private static native int runEmulator (String exePath, String diskPath);
 
 	//region Init Game Environment
 	public static boolean initEnvironment (@NonNull Context context) {
