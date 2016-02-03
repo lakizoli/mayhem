@@ -4,7 +4,7 @@
 void TexAnimMesh::Init () {
 	Mesh2D::Init ();
 
-	mTex = CreateTexture (mWidth, mHeight);
+	mTex = CreateColoredTexture (mWidth, mHeight, mBPP, 1.0, 0, 0, 1.0);
 	mVbo = NewTexturedVBO (mTex);
 }
 
@@ -22,13 +22,14 @@ void TexAnimMesh::Shutdown () {
 	Mesh2D::Shutdown ();
 }
 
-void TexAnimMesh::RenderMesh () {
-	//Update texture data
-	if (mDirty && mPixels) {
-		glBindTexture (GL_TEXTURE_2D, mTex);
-		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, mPixels);
-	}
+void TexAnimMesh::SetPixels (int width, int height, int bpp, const uint8_t *pixels) {
+	assert (mWidth == width && mHeight == height && (bpp == 24 || bpp == 32) && pixels != nullptr);
 
-	//Render VBO
+	GLint format = bpp == 24 ? GL_RGB : GL_RGBA;
+	glBindTexture (GL_TEXTURE_2D, mTex);
+	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, mWidth, mHeight, format, GL_UNSIGNED_BYTE, pixels);
+}
+
+void TexAnimMesh::RenderMesh () {
 	RenderTexturedVBO (mTex, mVbo[0], mVbo[1]);
 }

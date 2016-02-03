@@ -8,7 +8,7 @@
 //c64emu declarations
 extern "C" int main_program (int argc, char **argv);
 
-typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* size, uint32_t* pitch);
+typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* pitch);
 extern "C" void video_android_set_init_callback (t_fn_init_canvas init_canvas);
 
 typedef void (*t_fn_lock_canvas) ();
@@ -19,9 +19,8 @@ extern "C" void video_android_set_locking_callbacks (t_fn_lock_canvas lock_canva
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 engine_s g_engine; ///< The one and only global object of the game!
 
-static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* size, uint32_t* pitch) {
+static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* pitch) {
 	CHECKMSG (buffer != nullptr, "InitCanvas () - buffer cannot be nullptr!");
-	CHECKMSG (size != nullptr, "InitCanvas () - size cannot be nullptr!");
 	CHECKMSG (pitch != nullptr, "InitCanvas () - pitch cannot be nullptr!");
 
 	uint32_t bytePerPixel = bpp / 8;
@@ -31,10 +30,9 @@ static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** 
 	g_engine.canvas_bit_per_pixel = bpp;
 	g_engine.canvas_pitch = width * bytePerPixel;
 
-	*size = width * height * bytePerPixel;
 	*pitch = g_engine.canvas_pitch;
 
-	g_engine.canvas.resize (*size);
+	g_engine.canvas.resize (g_engine.canvas_pitch * height);
 	*buffer = &g_engine.canvas[0];
 
 	g_engine.canvas_dirty = false;

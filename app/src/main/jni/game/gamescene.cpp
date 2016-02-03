@@ -11,6 +11,8 @@ void GameScene::Init (int width, int height) {
 }
 
 void GameScene::Shutdown () {
+	if (mC64Screen != nullptr)
+		mC64Screen->Shutdown ();
 	mC64Screen.reset ();
 }
 
@@ -19,7 +21,10 @@ void GameScene::Resize (int newWidth, int newHeight) {
 
 void GameScene::Update (float elapsedTime) {
 	if (mC64Screen == nullptr && g_engine.canvas_inited) {
-		mC64Screen.reset (new TexAnimMesh (g_engine.canvas_width, g_engine.canvas_height));
+		mC64Screen.reset (new TexAnimMesh (g_engine.canvas_width, g_engine.canvas_height, 24));
+		mC64Screen->Init ();
+		mC64Screen->Pos = Vector2D (0.5f, 0.5f);
+		mC64Screen->Scale = Vector2D (0.45f, 0.45f);
 	}
 }
 
@@ -34,10 +39,7 @@ void GameScene::Render () {
 	if (mC64Screen != nullptr) {
 		if (g_engine.canvas_dirty) {
 			lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
-
-			mC64Screen->SetPixels (&g_engine.canvas[0]);
-			mC64Screen->SetDirty (true);
-
+			mC64Screen->SetPixels (g_engine.canvas_width, g_engine.canvas_height, g_engine.canvas_bit_per_pixel, &g_engine.canvas[0]);
 			g_engine.canvas_dirty = false;
 		}
 

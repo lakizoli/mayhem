@@ -32,6 +32,7 @@ LOCAL_SRC_FILES +=						\
 	platform/androidcontentmanager.cpp	\
 	platform/androidutil.cpp			\
 	platform/audiomanager.cpp			\
+	management/glerror.cpp				\
 	management/game.cpp					\
 	content/animation.cpp				\
 	content/geom.cpp					\
