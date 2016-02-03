@@ -24,6 +24,6 @@ struct engine_s {
 	uint32_t visible_width;
 	uint32_t visible_height;
 
-	vector<uint8_t> canvas;
+	vector<uint8_t> canvas; //screen pixels in BGR format
 	volatile bool canvas_dirty;
 };

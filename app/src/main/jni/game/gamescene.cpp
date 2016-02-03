@@ -33,7 +33,7 @@ void GameScene::Update (float elapsedTime) {
 		if (g_engine.canvas_dirty) {
 			lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
-			//Trim screen pixel buffer to visible size
+			//Trim screen pixel buffer to visible size (convert BGR to RGB)
 			assert (g_engine.visible_height <= g_engine.canvas_height);
 
 			//TODO: ... hqnx scale
@@ -42,10 +42,19 @@ void GameScene::Update (float elapsedTime) {
 			uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
 			uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
 			vector<uint8_t> pixels (pitch_dest * g_engine.visible_height);
+
 			for (uint32_t y = 0;y < g_engine.visible_height;++y) {
-				uint32_t offset_src = y * pitch_src;
-				uint32_t offset_dest = y * pitch_dest;
-				memcpy (&pixels[offset_dest], &g_engine.canvas[offset_src], pitch_dest);
+				uint32_t offset_src_line = y * pitch_src;
+				uint32_t offset_dest_line = y * pitch_dest;
+
+				for (uint32_t x = 0;x < g_engine.visible_width;++x) {
+					uint32_t offset_src = offset_src_line + x * bytePerPixel;
+					uint32_t offset_dest = offset_dest_line + x * bytePerPixel;
+
+					pixels[offset_dest + 0] = g_engine.canvas[offset_src + 2];
+					pixels[offset_dest + 1] = g_engine.canvas[offset_src + 1];
+					pixels[offset_dest + 2] = g_engine.canvas[offset_src + 0];
+				}
 			}
 
 			mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &pixels[0]);
