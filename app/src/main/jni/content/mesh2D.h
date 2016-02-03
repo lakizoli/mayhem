@@ -33,6 +33,7 @@ public:
 	}
 
 protected:
+	GLuint CreateTexture (int width, int height) const;
 	GLuint LoadTextureFromAsset (const string& asset) const;
 
 	Rect2D CalculateBoundingBox (const vector<float>& vertices) const;

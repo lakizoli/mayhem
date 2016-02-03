@@ -8,10 +8,49 @@
 //c64emu declarations
 extern "C" int main_program (int argc, char **argv);
 
+typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* size, uint32_t* pitch);
+extern "C" void video_android_set_init_callback (t_fn_init_canvas init_canvas);
+
+typedef void (*t_fn_lock_canvas) ();
+extern "C" void video_android_set_locking_callbacks (t_fn_lock_canvas lock_canvas, t_fn_lock_canvas unlock_canvas);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Game data
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 engine_s g_engine; ///< The one and only global object of the game!
+
+static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint8_t** buffer, uint32_t* size, uint32_t* pitch) {
+	CHECKMSG (buffer != nullptr, "InitCanvas () - buffer cannot be nullptr!");
+	CHECKMSG (size != nullptr, "InitCanvas () - size cannot be nullptr!");
+	CHECKMSG (pitch != nullptr, "InitCanvas () - pitch cannot be nullptr!");
+
+	uint32_t bytePerPixel = bpp / 8;
+
+	g_engine.canvas_width = width;
+	g_engine.canvas_height = height;
+	g_engine.canvas_bit_per_pixel = bpp;
+	g_engine.canvas_pitch = width * bytePerPixel;
+
+	*size = width * height * bytePerPixel;
+	*pitch = g_engine.canvas_pitch;
+
+	g_engine.canvas.resize (*size);
+	*buffer = &g_engine.canvas[0];
+
+	g_engine.canvas_dirty = false;
+
+	g_engine.canvas_inited = true;
+	return 0;
+}
+
+static void LockCanvas () {
+	g_engine.canvas_lock.lock ();
+}
+
+static void UnlockCanvas () {
+	g_engine.canvas_dirty = true;
+	g_engine.canvas_lock.unlock ();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // JNI functions of the GameLib java class
@@ -27,6 +66,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 	}
 
 	g_engine.lastUpdateTime = -1;
+
+	g_engine.canvas_inited = false;
+	g_engine.canvas_width = 0;
+	g_engine.canvas_height = 0;
+	g_engine.canvas_bit_per_pixel = 0;
+	g_engine.canvas_pitch = 0;
+
+	g_engine.canvas_dirty = false;
 
 	glViewport (0, 0, width, height);
 }
@@ -105,7 +152,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	char* diskBuffer = new char[disk.length () + 1];
 	strcpy (&diskBuffer[0], disk.c_str ());
 
-	char* argv[2] = { exeBuffer, diskBuffer };
+	char* argv[1] = { exeBuffer /*, diskBuffer*/ };
 	int argc = sizeof (argv) / sizeof (argv[0]);
 
 	//Change working directory to exe dir
@@ -118,6 +165,10 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 			return -1;
 		}
 	}
+
+	//Set callbacks of engine
+	video_android_set_init_callback (&InitCanvas);
+	video_android_set_locking_callbacks (&LockCanvas, &UnlockCanvas);
 
 	//Call main function of emulator
 	int res = main_program (argc, argv);

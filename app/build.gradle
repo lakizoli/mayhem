@@ -179,7 +179,7 @@ class NativeConfig {
         } else {
             this.command = "[\"sh\", \"-c\", \"" + preProcess +
                     ndkbuild +
-                    ' -j1' +
+                    ' -j8' +
                     ' \\\"NDK_PROJECT_PATH=../../build/intermediates/ndk\\\"' +
                     ' \\\"NDK_LIBS_OUT=jniLibs\\\"' +
                     ' \\\"APP_BUILD_SCRIPT=' + scriptPath + '/Android.mk\\\"' +

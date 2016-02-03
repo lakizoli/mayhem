@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../management/scene.h"
-#include "../content/imagemesh.h"
+
+class TexAnimMesh;
 
 class GameScene : public Scene {
 //Definitions
@@ -9,6 +10,7 @@ private:
 
 //Data
 private:
+	shared_ptr<TexAnimMesh> mC64Screen;
 
 //Construction
 public:

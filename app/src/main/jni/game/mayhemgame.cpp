@@ -29,7 +29,7 @@ const GameState &GameState::operator<< (istream & stream) {
 	return *this;
 }
 
-MayhemGame::MayhemGame (IUtil &util, IContentManager &contentManager) :
+MayhemGame::MayhemGame (IUtil& util, IContentManager& contentManager) :
 	Game (util, contentManager) {
 }
 

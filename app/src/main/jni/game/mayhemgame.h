@@ -19,7 +19,7 @@ class MayhemGame : public Game {
 	GameState _state;
 
 public:
-	MayhemGame (IUtil &util, IContentManager &contentManager);
+	MayhemGame (IUtil& util, IContentManager& contentManager);
 
 	virtual void Init (int width, int height, int refWidth, int refHeight) override;
 	virtual void Shutdown () override;
