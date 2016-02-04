@@ -28,9 +28,7 @@ void GameScene::Update (float elapsedTime) {
 		mC64Screen->Scale = Vector2D (0.45f, 0.45f);
 
 		uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
-		uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
-		uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
-		mC64Pixels.resize (pitch_dest * g_engine.visible_height);
+		mC64Pixels.resize (g_engine.visible_width * g_engine.visible_height * bytePerPixel);
 	}
 
 	//Update C64 screen texture
