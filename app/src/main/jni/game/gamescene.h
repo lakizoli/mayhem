@@ -11,6 +11,7 @@ private:
 //Data
 private:
 	shared_ptr<TexAnimMesh> mC64Screen;
+	vector<uint8_t> mC64Pixels;
 
 //Construction
 public:

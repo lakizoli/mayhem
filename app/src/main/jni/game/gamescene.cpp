@@ -26,6 +26,11 @@ void GameScene::Update (float elapsedTime) {
 		mC64Screen->Init ();
 		mC64Screen->Pos = Vector2D (0.5f, 0.5f);
 		mC64Screen->Scale = Vector2D (0.45f, 0.45f);
+
+		uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
+		uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
+		uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
+		mC64Pixels.resize (pitch_dest * g_engine.visible_height);
 	}
 
 	//Update C64 screen texture
@@ -41,11 +46,11 @@ void GameScene::Update (float elapsedTime) {
 			uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
 			uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
 			uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
-			vector<uint8_t> pixels (pitch_dest * g_engine.visible_height);
+			assert (mC64Pixels.size () == pitch_dest * g_engine.visible_height);
 
 			for (uint32_t y = 0, yEnd = g_engine.visible_height;y < yEnd;++y) {
 				uint32_t* src_pixel = (uint32_t*) (&g_engine.canvas[y * pitch_src]);
-				uint32_t* dst_pixel = (uint32_t*) (&pixels[y * pitch_dest]);
+				uint32_t* dst_pixel = (uint32_t*) (&mC64Pixels[y * pitch_dest]);
 
 				for (uint32_t x = 0, xEnd = g_engine.visible_width;x < xEnd;x += 4) {
 					uint32_t src = *src_pixel++;
@@ -62,7 +67,7 @@ void GameScene::Update (float elapsedTime) {
 				}
 			}
 
-			mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &pixels[0]);
+			mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &mC64Pixels[0]);
 			g_engine.canvas_dirty = false;
 		}
 	}
