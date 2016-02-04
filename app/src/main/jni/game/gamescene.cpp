@@ -34,34 +34,35 @@ void GameScene::Update (float elapsedTime) {
 	//Update C64 screen texture
 	if (mC64Screen) {
 		if (g_engine.canvas_dirty) {
-			lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
-
 			//Trim screen pixel buffer to visible size (convert BGR to RGB)
-			assert (g_engine.visible_height <= g_engine.canvas_height);
+			{
+				lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
-			//TODO: ... hqnx scale (if needed...)
+				assert (g_engine.visible_height <= g_engine.canvas_height);
+				//TODO: ... hqnx scale (if needed...)
 
-			uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
-			uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
-			uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
-			assert (mC64Pixels.size () == pitch_dest * g_engine.visible_height);
+				uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
+				uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
+				uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
+				assert (mC64Pixels.size () == pitch_dest * g_engine.visible_height);
 
-			for (uint32_t y = 0, yEnd = g_engine.visible_height;y < yEnd;++y) {
-				uint32_t* src_pixel = (uint32_t*) (&g_engine.canvas[y * pitch_src]);
-				uint32_t* dst_pixel = (uint32_t*) (&mC64Pixels[y * pitch_dest]);
+				for (uint32_t y = 0, yEnd = g_engine.visible_height; y < yEnd; ++y) {
+					uint32_t* src_pixel = (uint32_t*) (&g_engine.canvas[y * pitch_src]);
+					uint32_t* dst_pixel = (uint32_t*) (&mC64Pixels[y * pitch_dest]);
 
-				for (uint32_t x = 0, xEnd = g_engine.visible_width;x < xEnd;x += 4) {
-					uint32_t src = *src_pixel++;
-					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+					for (uint32_t x = 0, xEnd = g_engine.visible_width; x < xEnd; x += 4) {
+						uint32_t src = *src_pixel++;
+						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
 
-					src = *src_pixel++;
-					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+						src = *src_pixel++;
+						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
 
-					src = *src_pixel++;
-					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+						src = *src_pixel++;
+						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
 
-					src = *src_pixel++;
-					*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+						src = *src_pixel++;
+						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+					}
 				}
 			}
 
