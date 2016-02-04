@@ -47,21 +47,21 @@ void GameScene::Update (float elapsedTime) {
 				assert (mC64Pixels.size () == pitch_dest * g_engine.visible_height);
 
 				for (uint32_t y = 0, yEnd = g_engine.visible_height; y < yEnd; ++y) {
-					uint32_t* src_pixel = (uint32_t*) (&g_engine.canvas[y * pitch_src]);
-					uint32_t* dst_pixel = (uint32_t*) (&mC64Pixels[y * pitch_dest]);
+					uint64_t* src_pixel = (uint64_t*) (&g_engine.canvas[y * pitch_src]);
+					uint64_t* dst_pixel = (uint64_t*) (&mC64Pixels[y * pitch_dest]);
 
-					for (uint32_t x = 0, xEnd = g_engine.visible_width; x < xEnd; x += 4) {
-						uint32_t src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
-
-						src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+					for (uint32_t x = 0, xEnd = g_engine.visible_width; x < xEnd; x += 8) {
+						uint64_t src = *src_pixel++;
+						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
 
 						src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
 
 						src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF0000) >> 16 | (src & 0x0000FF00) | (src & 0x000000FF) << 16 | 0xFF000000;
+						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+
+						src = *src_pixel++;
+						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
 					}
 				}
 			}
