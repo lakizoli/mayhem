@@ -3,41 +3,47 @@
 
 Game* Game::mGame = nullptr;
 
-Game::Game (IUtil& util, IContentManager& contentManager) : mUtil (util), mContentManager (contentManager), mWidth (0), mHeight (0), mRefWidth (0), mRefHeight (0) {
+Game::Game (IUtil& util, IContentManager& contentManager) :
+	mUtil (util),
+	mContentManager (contentManager),
+	mWidth (0),
+	mHeight (0),
+	mScreenWidth (0),
+	mScreenHeight (0),
+	mRefWidth (0),
+	mRefHeight (0) {
 	mGame = this;
 }
 
-void Game::Init (int width, int height, int refWidth, int refHeight) {
-	if (width > height) {
-		mRefWidth = max (refWidth, refHeight);
-		mRefHeight = min (refWidth, refHeight);
-	} else {
-		mRefWidth = min (refWidth, refHeight);
-		mRefHeight = max (refWidth, refHeight);
-	}
+void Game::Init (int screenWidth, int screenHeight, int refWidth, int refHeight) {
+	mRefWidth = refWidth;
+	mRefHeight = refHeight;
 
-	InitProjection (width, height);
+	InitProjection (screenWidth, screenHeight);
 }
 
 void Game::Shutdown () {
 	SetCurrentScene (nullptr);
 }
 
-void Game::Resize (int newWidth, int newHeight) {
+void Game::Resize (int newScreenWidth, int newScreenHeight) {
+	float oldWidth = mWidth;
+	float oldHeight = mHeight;
+
 	int refWidth = mRefWidth;
 	int refHeight = mRefHeight;
-	if (newWidth > newHeight) {
+	if (newScreenWidth > newScreenHeight) { //Horizontal layout
 		mRefWidth = max (refWidth, refHeight);
 		mRefHeight = min (refWidth, refHeight);
-	} else {
+	} else { //Vertical layout
 		mRefWidth = min (refWidth, refHeight);
 		mRefHeight = max (refWidth, refHeight);
 	}
 
-	InitProjection (newWidth, newHeight);
+	InitProjection (newScreenWidth, newScreenHeight);
 
 	if (mCurrentScene != nullptr)
-		mCurrentScene->Resize (newWidth, newHeight);
+		mCurrentScene->Resize (oldWidth, oldHeight, mWidth, mHeight);
 }
 
 void Game::Update (float elapsedTime) {
@@ -50,7 +56,7 @@ void Game::Render () {
 		mCurrentScene->Render ();
 }
 
-void Game::SetCurrentScene (shared_ptr<Scene> scene) {
+void Game::SetCurrentScene (shared_ptr < Scene > scene) {
 	if (mCurrentScene != nullptr) {
 		mCurrentScene->Shutdown ();
 		mCurrentScene = nullptr;
@@ -77,33 +83,25 @@ void Game::TouchMove (int fingerID, float x, float y) {
 		mCurrentScene->TouchMove (fingerID, x, y);
 }
 
-Vector2D Game::ToLocal (float x, float y) const {
-	float widthRatio = 1.0f; //TODO: ... (float) mWidth / (float) mRefWidth;
-	float heightRatio = 1.0f; //TODO: ... (float) mHeight / (float) mRefHeight;
-
-	float min = (float) std::min (mWidth, mHeight);
-	float max = (float) std::max (mWidth, mHeight);
-	float aspect = max / min;
-	if (mWidth <= mHeight) {
-		return Vector2D (x / (float) mWidth * widthRatio, aspect * y / (float) mHeight * heightRatio);
-	}
-
-	return Vector2D (aspect * x / (float) mWidth * widthRatio, y / (float) mHeight * heightRatio);
-}
-
-void Game::InitProjection (int width, int height) {
-	mWidth = width;
-	mHeight = height;
+void Game::InitProjection (int screenWidth, int screenHeight) {
+	mScreenWidth = screenWidth;
+	mScreenHeight = screenHeight;
 
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
 
-	float min = (float) std::min (width, height);
-	float max = (float) std::max (width, height);
+	float min = (float) std::min (screenWidth, screenHeight);
+	float max = (float) std::max (screenWidth, screenHeight);
 	float aspect = max / min;
-	if (width <= height) {
+	if (screenWidth <= screenHeight) { //Vertical state
+		mWidth = 1.0f;
+		mHeight = aspect;
+
 		glOrthof (0, 1.0f, aspect, 0, -1.0f, 1.0f);
-	} else {
+	} else { //Horizontal state
+		mWidth = aspect;
+		mHeight = 1.0f;
+
 		glOrthof (0, aspect, 1.0f, 0, -1.0f, 1.0f);
 	}
 }

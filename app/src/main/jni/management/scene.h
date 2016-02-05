@@ -1,16 +1,18 @@
 #pragma once
 
-/// Abstract base class of a scene in the game.
+///
+/// Abstract base class of a scene in the game. (All coordinates are in local system!)
+///
 class Scene {
 public:
 	/// Init scene once before draw.
-	virtual void Init (int width, int height) = 0;
+	virtual void Init (float width, float height) = 0;
 
 	/// Shutdown once after draw.
 	virtual void Shutdown () = 0;
 
 	/// Resize scene.
-	virtual void Resize (int newWidth, int newHeight) = 0;
+	virtual void Resize (float oldWidth, float oldHeight, float newWidth, float newHeight) = 0;
 
 	/// Update scene's state in each step.
 	virtual void Update (float elapsedTime) = 0;

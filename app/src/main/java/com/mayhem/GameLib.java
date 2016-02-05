@@ -12,8 +12,11 @@ import java.io.InputStream;
 public class GameLib {
 	private static String mDataPath;
 
-	public static native void init (int width, int height, int refWidth, int refHeight);
+	public static native void init (int screenWidth, int screenHeight, int refWidth, int refHeight);
+	public static native boolean isInited ();
+
 	public static native void step ();
+	public static native void resize (int newScreenWidth, int newScreenHeight);
 
 	public static native boolean hasPointerID (int id);
 	public static native void insertPointerID (int id);

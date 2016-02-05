@@ -3,6 +3,8 @@
 #include "vector2D.h"
 #include "rect2D.h"
 
+class Color;
+
 /// Base class for 2D meshes.
 class Mesh2D : public enable_shared_from_this<Mesh2D> {
 //Data
@@ -34,7 +36,7 @@ public:
 
 protected:
 	GLuint CreateTexture (int width, int height, int bpp) const;
-	GLuint CreateColoredTexture (int width, int height, int bpp, float red, float green, float blue, float alpha = 1.0f) const;
+	GLuint CreateColoredTexture (int width, int height, int bpp, const Color& color) const;
 	GLuint LoadTextureFromAsset (const string& asset) const;
 
 	Rect2D CalculateBoundingBox (const vector<float>& vertices) const;

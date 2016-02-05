@@ -3,20 +3,32 @@
 #include "../engine.h"
 #include "../management/game.h"
 #include "../content/texanimmesh.h"
+#include "../content/coloredmesh.h"
 
 extern engine_s g_engine;
 
-void GameScene::Init (int width, int height) {
+void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
+
+	if (width <= height)
+		InitVerticalLayout (true);
+	else
+		InitHorizontalLayout (true);
 }
 
 void GameScene::Shutdown () {
+	DestroyButtons ();
+
 	if (mC64Screen)
 		mC64Screen->Shutdown ();
 	mC64Screen.reset ();
 }
 
-void GameScene::Resize (int newWidth, int newHeight) {
+void GameScene::Resize (float oldWidth, float oldHeight, float newWidth, float newHeight) {
+	if (newWidth <= newHeight)
+		InitVerticalLayout (true);
+	else
+		InitHorizontalLayout (true);
 }
 
 void GameScene::Update (float elapsedTime) {
@@ -24,8 +36,15 @@ void GameScene::Update (float elapsedTime) {
 	if (!mC64Screen && g_engine.canvas_inited) {
 		mC64Screen.reset (new TexAnimMesh (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel));
 		mC64Screen->Init ();
-		mC64Screen->Pos = Vector2D (0.5f, 0.5f);
-		mC64Screen->Scale = Vector2D (0.45f, 0.45f);
+
+		float c64aspect = (float)g_engine.visible_height / (float)g_engine.visible_width;
+		mC64Screen->Scale = Vector2D (0.45f, 0.45f * c64aspect);
+
+		Game& game = Game::Get ();
+		if (game.Width () <= game.Height ())
+			InitVerticalLayout (false);
+		else
+			InitHorizontalLayout (false);
 
 		uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
 		mC64Pixels.resize (g_engine.visible_width * g_engine.visible_height * bytePerPixel);
@@ -100,4 +119,52 @@ void GameScene::TouchMove (int fingerID, float x, float y) {
 	Scene::TouchMove (fingerID, x, y);
 
 	//...
+}
+
+void GameScene::DestroyButtons () {
+	mLeft.reset ();
+	mRight.reset ();
+	mUp.reset ();
+	mDown.reset ();
+	mFireLeft.reset ();
+	mFireRight.reset ();
+}
+
+void GameScene::InitVerticalLayout (bool initButtons) {
+	//place C64 screen to the right position
+	if (mC64Screen) {
+		mC64Screen->Pos = Vector2D (0.5f, 0.5f);
+	}
+
+	//Init buttons
+	if (initButtons) {
+		DestroyButtons ();
+
+//		mLeft.reset (new ColoredMesh ());
+//		mRight.reset (new ColoredMesh ());
+//		mUp.reset (new ColoredMesh ());
+//		mDown.reset (new ColoredMesh ());
+//		mFireLeft.reset (new ColoredMesh ());
+//		mFireRight.reset (new ColoredMesh ());
+	}
+}
+
+void GameScene::InitHorizontalLayout (bool initButtons) {
+	//place C64 screen to the right position
+	if (mC64Screen) {
+		Game& game = Game::Get ();
+		mC64Screen->Pos = Vector2D (0.5f * game.Width (), 0.5f);
+	}
+
+	//Init buttons
+	if (initButtons) {
+		DestroyButtons ();
+
+//		mLeft.reset (new ColoredMesh ());
+//		mRight.reset (new ColoredMesh ());
+//		mUp.reset (new ColoredMesh ());
+//		mDown.reset (new ColoredMesh ());
+//		mFireLeft.reset (new ColoredMesh ());
+//		mFireRight.reset (new ColoredMesh ());
+	}
 }

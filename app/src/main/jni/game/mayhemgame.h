@@ -21,7 +21,7 @@ class MayhemGame : public Game {
 public:
 	MayhemGame (IUtil& util, IContentManager& contentManager);
 
-	virtual void Init (int width, int height, int refWidth, int refHeight) override;
+	virtual void Init (int screenWidth, int screenHeight, int refWidth, int refHeight) override;
 	virtual void Shutdown () override;
 
 	const GameState &State () const {

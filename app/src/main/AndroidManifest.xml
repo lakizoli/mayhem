@@ -15,7 +15,7 @@
         android:label="@string/activity_name">
         <activity
             android:name="GameActivity"
-            android:configChanges="orientation|keyboardHidden"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:launchMode="singleTask"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
             <intent-filter>

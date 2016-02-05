@@ -1,5 +1,6 @@
 #include "../pch.h"
 #include "mesh2D.h"
+#include "color.h"
 #include "../management/game.h"
 
 void Mesh2D::Init () {
@@ -40,17 +41,17 @@ GLuint Mesh2D::CreateTexture (int width, int height, int bpp) const {
 	return texID;
 }
 
-GLuint Mesh2D::CreateColoredTexture (int width, int height, int bpp, float red, float green, float blue, float alpha) const {
+GLuint Mesh2D::CreateColoredTexture (int width, int height, int bpp, const Color& color) const {
 	assert (width > 0 && height > 0 && (bpp == 24 || bpp == 32));
 
 	GLuint texID = 0;
 	glGenTextures (1, &texID);
 	glBindTexture (GL_TEXTURE_2D, texID);
 
-	uint8_t colR = (uint8_t)(red * 255.0f + 0.5f);
-	uint8_t colG = (uint8_t)(green * 255.0f + 0.5f);
-	uint8_t colB = (uint8_t)(blue * 255.0f + 0.5f);
-	uint8_t colA = (uint8_t)(alpha * 255.0f + 0.5f);
+	uint8_t colR = color.RedByte ();
+	uint8_t colG = color.GreenByte ();
+	uint8_t colB = color.BlueByte ();
+	uint8_t colA = color.AlphaByte ();
 
 	int bytePerPixel = bpp / 8;
 	vector<uint8_t> pixels (width * height * bytePerPixel);

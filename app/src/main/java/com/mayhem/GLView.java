@@ -286,12 +286,16 @@ class GLView extends GLSurfaceView {
 		}
 
 		public void onSurfaceChanged (GL10 gl, int width, int height) {
-			int refWidth = width > height ? 1920 : 1080;
-			int refHeight = width > height ? 1080 : 1920;
-			GameLib.init (width, height, refWidth, refHeight);
+			if (GameLib.isInited ()) {
+				GameLib.resize (width, height);
+			} else { //First call
+				int refWidth = width > height ? 2392 : 1440;
+				int refHeight = width > height ? 1440 : 2392;
+				GameLib.init (width, height, refWidth, refHeight);
 
-			//Starting the c64 emulator in a background thread
-			mEmulatorThread.start ();
+				//Starting the c64 emulator in a background thread
+				mEmulatorThread.start ();
+			}
 		}
 
 		public void onSurfaceCreated (GL10 gl, EGLConfig config) {

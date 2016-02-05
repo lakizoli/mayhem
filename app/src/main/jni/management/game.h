@@ -5,7 +5,13 @@
 #include "scene.h"
 #include "../content/vector2D.h"
 
+///
 /// Base class of the game.
+///
+/// Uses 3 coordinate system: (all 3 has the origin in top left corner!)
+/// 1.) Screen system -> mScreenWidth, mScreenHeight (physical dimension of the screen)
+/// 2.) Reference system -> mRefWidth, mRefHeight (physical dimension of the developer [reference] machine's screen)
+/// 3.) Local system -> mWidth,  mHeight(floating point coordinates in OpenGL used for drawing and positioning [0..1, 0..aspect])
 class Game {
 //Data 
 private:
@@ -13,8 +19,11 @@ private:
 	IUtil& mUtil;
 	IContentManager& mContentManager;
 
-	int mWidth;
-	int mHeight;
+	float mWidth;
+	float mHeight;
+
+	int mScreenWidth;
+	int mScreenHeight;
 
 	int mRefWidth;
 	int mRefHeight;
@@ -47,10 +56,10 @@ public:
 
 //Management interface
 public:
-	virtual void Init (int width, int height, int refWidth, int refHeight);
+	virtual void Init (int screenWidth, int screenHeight, int refWidth, int refHeight);
 	virtual void Shutdown ();
 
-	void Resize (int newWidth, int newHeight);
+	virtual void Resize (int newScreenWidth, int newScreenHeight);
 
 	/// <summary>
 	/// The update step of the game.
@@ -75,25 +84,32 @@ public:
 
 //Helpers
 public:
-	float ScreenWidth () const {
-		return ToLocal (mWidth, 0).x;
+	float Width () const { return mWidth; }
+	float Height () const { return mHeight; }
+
+	int ScreenWidth () const { return mScreenWidth; }
+	int ScreenHeight () const { return mScreenHeight; }
+
+	int RefWidth () const { return mRefWidth; }
+	int RefHeight () const { return mRefHeight; }
+
+	Vector2D LocalToScreen (float localX, float localY) const {
+		return Vector2D (localX * mScreenWidth / mWidth, localY * mScreenHeight / mHeight);
 	}
 
-	float ScreenHeight () const {
-		return ToLocal (0, mHeight).y;
+	Vector2D LocalToRef (float localX, float localY) const {
+		return Vector2D (localX * mRefWidth / mWidth, localY * mRefHeight / mHeight);
 	}
 
-	float WidthRatio () const {
-		return (float) mWidth / (float) mRefWidth;
+	Vector2D ScreenToLocal (float x, float y) const {
+		return Vector2D (x * mWidth / mScreenWidth, y * mHeight / mScreenHeight);
 	}
 
-	float HeightRatio () const {
-		return (float) mHeight / (float) mRefHeight;
+	Vector2D RefToLocal (float refX, float refY) const {
+		return Vector2D (refX * mWidth / mRefWidth, refY * mHeight / mRefHeight);
 	}
-
-	Vector2D ToLocal (float x, float y) const;
 
 //Inner methods
 private:
-	void InitProjection (int width, int height);
+	void InitProjection (int screenWidth, int screenHeight);
 };

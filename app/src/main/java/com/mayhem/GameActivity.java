@@ -3,6 +3,8 @@ package com.mayhem;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -81,6 +83,12 @@ public class GameActivity extends Activity {
 		mView.onResume ();
 	}
 
+	@Override
+	public void onConfigurationChanged (Configuration newConfig) {
+		super.onConfigurationChanged (newConfig);
+		//... Nothing to do ...
+	}
+
 	private native void init (AssetManager assetManager);
 	private native boolean isLite ();
 
@@ -97,23 +105,23 @@ public class GameActivity extends Activity {
 		try {
 			inputStream = openFileInput (fileName);
 
-			StringBuffer fileContent = new StringBuffer("");
+			StringBuffer fileContent = new StringBuffer ("");
 			byte[] buffer = new byte[1024];
 
 			int n = 0;
-			while ((n = inputStream.read(buffer)) != -1) {
-				fileContent.append(new String(buffer, 0, n));
+			while ((n = inputStream.read (buffer)) != -1) {
+				fileContent.append (new String (buffer, 0, n));
 			}
 
 			content = fileContent.toString ();
 		} catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace ();
 		} finally {
 			try {
 				if (inputStream != null)
 					inputStream.close ();
 			} catch (Exception e) {
-				e.printStackTrace();
+				e.printStackTrace ();
 			}
 		}
 
@@ -124,27 +132,37 @@ public class GameActivity extends Activity {
 		FileOutputStream outputStream = null;
 		try {
 			outputStream = openFileOutput (fileName, Context.MODE_PRIVATE);
-			outputStream.write(content.getBytes());
+			outputStream.write (content.getBytes ());
 		} catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace ();
 		} finally {
 			try {
 				if (outputStream != null)
 					outputStream.close ();
 			} catch (Exception e) {
-				e.printStackTrace();
+				e.printStackTrace ();
 			}
 		}
 	}
 
 	public void displayStatus (final String status) {
 		runOnUiThread (new Runnable () {
-			   @Override
-			   public void run () {
-				   mStatusLine.setText (status);
-			   }
-		   }
+						   @Override
+						   public void run () {
+							   mStatusLine.setText (status);
+						   }
+					   }
 		);
+	}
+	//endregion
+
+	//region Common Helper functions
+	public static int dpToPx (int dp) {
+		return (int) (dp * Resources.getSystem ().getDisplayMetrics ().density + 0.5f);
+	}
+
+	public static int pxToDp (int px) {
+		return (int) (px / Resources.getSystem ().getDisplayMetrics ().density + 0.5f);
 	}
 	//endregion
 }

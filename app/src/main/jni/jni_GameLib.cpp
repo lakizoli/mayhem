@@ -4,6 +4,7 @@
 #include "game/mayhemgame.h"
 #include "platform/androidcontentmanager.h"
 #include "platform/androidutil.h"
+#include "management/game.h"
 
 //c64emu declarations
 extern "C" int main_program (int argc, char **argv);
@@ -72,14 +73,14 @@ static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // JNI functions of the GameLib java class
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jclass clazz, jint width, jint height, jint refWidth, jint refHeight) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight) {
 	CHECKMSG (g_engine.util != nullptr, "g_engine.util must be initialized before GameLib init!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine.contentManager must be initialized before GameLib init!");
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine.pointerIDs must be initialized before GameLib init!");
 
 	if (!g_engine.game) {
 		g_engine.game.reset (new MayhemGame (*(g_engine.util), *(g_engine.contentManager)));
-		g_engine.game->Init (width, height, refWidth, refHeight);
+		g_engine.game->Init (screenWidth, screenHeight, refWidth, refHeight);
 	}
 
 	g_engine.lastUpdateTime = -1;
@@ -95,7 +96,11 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 
 	g_engine.canvas_dirty = false;
 
-	glViewport (0, 0, width, height);
+	glViewport (0, 0, screenWidth, screenHeight);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* env, jclass type) {
+	return g_engine.game != nullptr ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
@@ -114,6 +119,13 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 
 	//Render the game
 	g_engine.game->Render ();
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resize (JNIEnv* env, jclass clazz, jint newScreenWidth, jint newScreenHeight) {
+	glViewport (0, 0, newScreenWidth, newScreenHeight);
+
+	if (g_engine.game)
+		g_engine.game->Resize (newScreenWidth, newScreenHeight);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_hasPointerID (JNIEnv* env, jclass clazz, jint id) {

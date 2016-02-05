@@ -33,8 +33,8 @@ MayhemGame::MayhemGame (IUtil& util, IContentManager& contentManager) :
 	Game (util, contentManager) {
 }
 
-void MayhemGame::Init (int width, int height, int refWidth, int refHeight) {
-	Game::Init (width, height, refWidth, refHeight);
+void MayhemGame::Init (int screenWidth, int screenHeight, int refWidth, int refHeight) {
+	Game::Init (screenWidth, screenHeight, refWidth, refHeight);
 	ReadGameState ();
 
 	SetCurrentScene (shared_ptr<Scene> (new GameScene ()));

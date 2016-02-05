@@ -1,10 +1,11 @@
 #include "../pch.h"
 #include "texanimmesh.h"
+#include "color.h"
 
 void TexAnimMesh::Init () {
 	Mesh2D::Init ();
 
-	mTex = CreateColoredTexture (mWidth, mHeight, mBPP, 1.0, 0, 0, 1.0);
+	mTex = CreateColoredTexture (mWidth, mHeight, mBPP, Color (1.0f, 0, 0));
 	mVbo = NewTexturedVBO (mTex);
 }
 
