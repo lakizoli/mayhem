@@ -37,6 +37,7 @@ LOCAL_SRC_FILES +=						\
 	content/animation.cpp				\
 	content/geom.cpp					\
 	content/mesh2D.cpp					\
+	content/coloredmesh.cpp				\
 	content/texanimmesh.cpp				\
 	content/imagemesh.cpp				\
 	content/qte.cpp						\
