@@ -417,41 +417,38 @@ void GameScene::HandleKey (GameScene::Buttons button, bool pressed) {
 	switch (button) {
 		case Buttons::Left:
 			if (pressed) {
-				keyboard_key_pressed (30);
+				keyboard_key_pressed (75);
 			} else {
-				keyboard_key_released (30);
+				keyboard_key_released (75);
 			}
 			break;
 		case Buttons::Right:
 			if (pressed) {
-				keyboard_key_pressed (32);
+				keyboard_key_pressed (77);
 			} else {
-				keyboard_key_released (32);
+				keyboard_key_released (77);
 			}
 			break;
 		case Buttons::Up:
 			if (pressed) {
-				keyboard_key_pressed (17);
+				keyboard_key_pressed (72);
 			} else {
-				keyboard_key_released (17);
+				keyboard_key_released (72);
 			}
 			break;
 		case Buttons::Down:
 			if (pressed) {
-				keyboard_key_pressed (44);
+				keyboard_key_pressed (80);
 			} else {
-				keyboard_key_released (44);
+				keyboard_key_released (80);
 			}
 			break;
 		case Buttons::FireLeft:
 		case Buttons::FireRight:
-			//TODO: ... handle non demo state (42)
 			if (pressed) {
-				//keyboard_key_pressed (57);
-				keyboard_key_pressed (42);
+				keyboard_key_pressed (100);
 			} else {
-				keyboard_key_released (42);
-				//keyboard_key_released (57);
+				keyboard_key_released (100);
 			}
 			break;
 		case Buttons::C64: //Skip level
