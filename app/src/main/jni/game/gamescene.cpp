@@ -6,14 +6,27 @@
 #include "../content/coloredmesh.h"
 
 extern engine_s g_engine;
+extern "C" void keyboard_key_pressed (signed long key);
+extern "C" void keyboard_key_released (signed long key);
 
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
+
+	mScreenCounter = 0;
+	mDrawCounter = 0;
+	mNoDrawCounter = 0;
+	mRedSum = 0;
+	mGreenSum = 0;
+	mBlueSum = 0;
+
+	mState = GameStates::Blue;
 
 	if (width <= height)
 		InitVerticalLayout (true);
 	else
 		InitHorizontalLayout (true);
+
+	mButtonStates = (uint32_t) Buttons::None;
 }
 
 void GameScene::Shutdown () {
@@ -48,52 +61,119 @@ void GameScene::Update (float elapsedTime) {
 
 		uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
 		mC64Pixels.resize (g_engine.visible_width * g_engine.visible_height * bytePerPixel);
+
+		mScreenCounter = 0;
+		mDrawCounter = 0;
+		mNoDrawCounter = 0;
+		mRedSum = 0;
+		mGreenSum = 0;
+		mBlueSum = 0;
+
+		mState = GameStates::Blue;
 	}
 
 	//Update C64 screen texture
 	if (mC64Screen) {
-		if (g_engine.canvas_dirty) {
+		if (g_engine.canvas_dirty) { //Something changed on the screen, so we need to refresh the texture
+			++mScreenCounter;
+			++mDrawCounter;
+			mNoDrawCounter = 0;
+
+			mRedSum = 0;
+			mGreenSum = 0;
+			mBlueSum = 0;
+
 			//Trim screen pixel buffer to visible size (convert BGR to RGB)
-			{
-				lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+			if (mState == GameStates::Game)
+				ConvertBGRAInGame ();
+			else
+				ConvertBGRADuringLoad ();
 
-				assert (g_engine.visible_height <= g_engine.canvas_height);
-				//TODO: ... hqnx scale (if needed...)
-
-				uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
-				uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
-				uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
-				assert (mC64Pixels.size () == pitch_dest * g_engine.visible_height);
-
-				for (uint32_t y = 0, yEnd = g_engine.visible_height; y < yEnd; ++y) {
-					uint64_t* src_pixel = (uint64_t*) (&g_engine.canvas[y * pitch_src]);
-					uint64_t* dst_pixel = (uint64_t*) (&mC64Pixels[y * pitch_dest]);
-
-					for (uint32_t x = 0, xEnd = g_engine.visible_width; x < xEnd; x += 8) {
-						uint64_t src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
-
-						src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
-
-						src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
-
-						src = *src_pixel++;
-						*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+			//Handle game state transitions during initialization (C64 load process)
+			switch (mState) {
+				case GameStates::Blue:
+					if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000)
+						mState = GameStates::AfterBlue;
+					break;
+				case GameStates::AfterBlue:
+					if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
+						mScreenCounter = 0;
+						mState = GameStates::Demo;
 					}
-				}
+					break;
+				case GameStates::Demo:
+					if (mScreenCounter == 4) {
+						keyboard_key_pressed (57); //press space on keyboard
+					} else if (mScreenCounter > 4) {
+						keyboard_key_released (57); //release space on keyboard
+						mState = GameStates::AfterDemo;
+					}
+					break;
+				case GameStates::AfterDemo:
+					if (mRedSum == 0 && mGreenSum == 0 && mBlueSum == 0) {
+						mScreenCounter = 0;
+						mState = GameStates::BeforeHack;
+					}
+					break;
+				case GameStates::BeforeHack:
+					if (mRedSum > 0 && mGreenSum > 0 && mBlueSum > 0) {
+						mScreenCounter = 0;
+						mState = GameStates::Hack;
+					}
+					break;
+				case GameStates::Hack:
+					if (mScreenCounter == 1) {
+						keyboard_key_pressed (59); //F1
+					} else if (mScreenCounter == 2) {
+						keyboard_key_released (59); //F1
+						keyboard_key_pressed (61); //F3
+					} else if (mScreenCounter == 3) {
+						keyboard_key_released (61); //F3
+						keyboard_key_pressed (63); //F5
+					} else if (mScreenCounter == 4) {
+						keyboard_key_released (63); //F5
+						mScreenCounter = 0;
+						mState = GameStates::AfterHack;
+					}
+					break;
+				case GameStates::AfterHack:
+					if (mScreenCounter == 1) {
+						keyboard_key_released (57); //release space
+					} else if (mScreenCounter > 1) {
+						mRedSum = mGreenSum = mBlueSum = 0;
+						mState = GameStates::Game;
+					}
+					break;
+				default:
+					break;
 			}
 
-			mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &mC64Pixels[0]);
+			//Draw the screen of the game
+			if (mState == GameStates::Game) {
+				mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &mC64Pixels[0]);
+			}
 			g_engine.canvas_dirty = false;
+		} else { //Nothing to draw
+			mDrawCounter = 0;
+			++mNoDrawCounter;
+
+			//Handle game state transitions during initialization (load process)
+			switch (mState) {
+				case GameStates::AfterHack:
+					if (mNoDrawCounter == 3) {
+						keyboard_key_pressed (57); //press space
+					}
+					break;
+				default:
+					break;
+			}
 		}
 	}
 }
 
 void GameScene::Render () {
-	//glClearColor (1.0f, 0.5f, 0.5f, 1.0f);
-	glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor (1.0f, 0.5f, 0.5f, 1.0f);
+	//glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
 	glClear (GL_COLOR_BUFFER_BIT);
 
 	glMatrixMode (GL_MODELVIEW);
@@ -101,33 +181,151 @@ void GameScene::Render () {
 
 	if (mC64Screen)
 		mC64Screen->Render ();
+
+	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
+		if (it->second)
+			it->second->Render ();
+	}
 }
 
-void GameScene::TouchDown (int fingerID, float x, float y) {
-	Scene::TouchDown (fingerID, x, y);
+void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
+	Scene::TouchDown (fingerID, pos);
 
-	//...
+	if (mState == GameStates::Game) {
+		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
+			if (it->second && (mButtonStates & (uint32_t) it->first) != (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If button not pressed
+				mButtonStates |= (uint32_t) it->first;
+				mButtonFingerIDs[fingerID] = it->first;
+
+				HandleKey (it->first, true);
+			}
+		}
+	}
 }
 
-void GameScene::TouchUp (int fingerID, float x, float y) {
-	Scene::TouchUp (fingerID, x, y);
+void GameScene::TouchUp (int fingerID, const Vector2D& pos) {
+	Scene::TouchUp (fingerID, pos);
 
-	//...
+	if (mState == GameStates::Game) {
+		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
+			if (it->second && (mButtonStates & (uint32_t) it->first) == (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If already in pressed state
+				HandleKey (it->first, false);
+
+				mButtonStates &= !((uint32_t) it->first);
+				mButtonFingerIDs.erase (fingerID);
+			}
+		}
+	}
 }
 
-void GameScene::TouchMove (int fingerID, float x, float y) {
-	Scene::TouchMove (fingerID, x, y);
+void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
+	Scene::TouchMove (fingerID, pos);
 
-	//...
+	if (mState == GameStates::Game) {
+		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
+			if (it->second && it->second->TransformedBoundingBox ().Contains (pos)) { //Handle finger moves
+				//Handle key release by move
+				auto itFinger = mButtonFingerIDs.find (fingerID);
+				if (itFinger != mButtonFingerIDs.end () && itFinger->second != it->first) { //Touch up of button, when finger moved to another button
+					HandleKey (itFinger->second, false);
+
+					mButtonStates &= !((uint32_t) itFinger->second);
+					mButtonFingerIDs.erase (fingerID);
+				}
+
+				//Handle key press by move
+				if ((mButtonStates & (uint32_t) it->first) != (uint32_t) it->first) {
+					mButtonStates |= (uint32_t) it->first;
+					mButtonFingerIDs[fingerID] = it->first;
+
+					HandleKey (it->first, true);
+				}
+			}
+		}
+	}
+}
+
+void GameScene::ConvertBGRADuringLoad () {
+	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+
+	assert (g_engine.visible_height <= g_engine.canvas_height);
+
+	uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
+	uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
+	uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
+	assert (mC64Pixels.size () == pitch_dest * g_engine.visible_height);
+
+	for (uint32_t y = 0, yEnd = g_engine.visible_height; y < yEnd; ++y) {
+		uint64_t* src_pixel = (uint64_t*) (&g_engine.canvas[y * pitch_src]);
+		uint64_t* dst_pixel = (uint64_t*) (&mC64Pixels[y * pitch_dest]);
+
+		for (uint32_t x = 0, xEnd = g_engine.visible_width; x < xEnd; x += 8) {
+			uint64_t src = *src_pixel++;
+			mRedSum +=		(uint8_t)((src & 0x00FF000000000000ull) >> 48) + (uint8_t)((src & 0x0000000000FF0000ull) >> 16);
+			mGreenSum +=	(uint8_t)((src & 0x0000FF0000000000ull) >> 40) + (uint8_t)((src & 0x000000000000FF00ull) >> 8);
+			mBlueSum +=		(uint8_t)((src & 0x000000FF00000000ull) >> 32) + (uint8_t)(src & 0x00000000000000FFull);
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+
+			src = *src_pixel++;
+			mRedSum +=		(uint8_t)((src & 0x00FF000000000000ull) >> 48) + (uint8_t)((src & 0x0000000000FF0000ull) >> 16);
+			mGreenSum +=	(uint8_t)((src & 0x0000FF0000000000ull) >> 40) + (uint8_t)((src & 0x000000000000FF00ull) >> 8);
+			mBlueSum +=		(uint8_t)((src & 0x000000FF00000000ull) >> 32) + (uint8_t)(src & 0x00000000000000FFull);
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+
+			src = *src_pixel++;
+			mRedSum +=		(uint8_t)((src & 0x00FF000000000000ull) >> 48) + (uint8_t)((src & 0x0000000000FF0000ull) >> 16);
+			mGreenSum +=	(uint8_t)((src & 0x0000FF0000000000ull) >> 40) + (uint8_t)((src & 0x000000000000FF00ull) >> 8);
+			mBlueSum +=		(uint8_t)((src & 0x000000FF00000000ull) >> 32) + (uint8_t)(src & 0x00000000000000FFull);
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+
+			src = *src_pixel++;
+			mRedSum +=		(uint8_t)((src & 0x00FF000000000000ull) >> 48) + (uint8_t)((src & 0x0000000000FF0000ull) >> 16);
+			mGreenSum +=	(uint8_t)((src & 0x0000FF0000000000ull) >> 40) + (uint8_t)((src & 0x000000000000FF00ull) >> 8);
+			mBlueSum +=		(uint8_t)((src & 0x000000FF00000000ull) >> 32) + (uint8_t)(src & 0x00000000000000FFull);
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+		}
+	}
+}
+
+void GameScene::ConvertBGRAInGame () {
+	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+
+	assert (g_engine.visible_height <= g_engine.canvas_height);
+
+	uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
+	uint32_t pitch_src = g_engine.canvas_width * bytePerPixel;
+	uint32_t pitch_dest = g_engine.visible_width * bytePerPixel;
+	assert (mC64Pixels.size () == pitch_dest * g_engine.visible_height);
+
+	for (uint32_t y = 0, yEnd = g_engine.visible_height; y < yEnd; ++y) {
+		uint64_t* src_pixel = (uint64_t*) (&g_engine.canvas[y * pitch_src]);
+		uint64_t* dst_pixel = (uint64_t*) (&mC64Pixels[y * pitch_dest]);
+
+		for (uint32_t x = 0, xEnd = g_engine.visible_width; x < xEnd; x += 8) {
+			uint64_t src = *src_pixel++;
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+
+			src = *src_pixel++;
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+
+			src = *src_pixel++;
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+
+			src = *src_pixel++;
+			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
+		}
+	}
 }
 
 void GameScene::DestroyButtons () {
-	mLeft.reset ();
-	mRight.reset ();
-	mUp.reset ();
-	mDown.reset ();
-	mFireLeft.reset ();
-	mFireRight.reset ();
+	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
+		if (it->second)
+			it->second->Shutdown ();
+	}
+	mButtons.clear ();
+
+	mButtonStates = (uint32_t) Buttons::None;
+	mButtonFingerIDs.clear ();
 }
 
 void GameScene::InitVerticalLayout (bool initButtons) {
@@ -140,12 +338,58 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 	if (initButtons) {
 		DestroyButtons ();
 
-//		mLeft.reset (new ColoredMesh ());
-//		mRight.reset (new ColoredMesh ());
-//		mUp.reset (new ColoredMesh ());
-//		mDown.reset (new ColoredMesh ());
-//		mFireLeft.reset (new ColoredMesh ());
-//		mFireRight.reset (new ColoredMesh ());
+		{
+			shared_ptr <ColoredMesh> left (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0)));
+			left->Init ();
+			left->Pos = Vector2D (0.1f, 1.4f);
+			left->Scale = Vector2D (0.07f, 0.2f);
+			mButtons[Buttons::Left] = left;
+		}
+
+		{
+			shared_ptr <ColoredMesh> right (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 0)));
+			right->Init ();
+			right->Pos = Vector2D (0.25f, 1.4f);
+			right->Scale = Vector2D (0.07f, 0.2f);
+			mButtons[Buttons::Right] = right;
+		}
+
+		{
+			shared_ptr <ColoredMesh> up (new ColoredMesh (1, 1, 32, Color (0, 0, 1.0f)));
+			up->Init ();
+			up->Pos = Vector2D (0.81f, 1.31f);
+			up->Scale = Vector2D (0.14f, 0.09f);
+			mButtons[Buttons::Up] = up;
+		}
+
+		{
+			shared_ptr <ColoredMesh> down (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0)));
+			down->Init ();
+			down->Pos = Vector2D (0.81f, 1.51f);
+			down->Scale = Vector2D (0.14f, 0.09f);
+			mButtons[Buttons::Down] = down;
+		}
+
+		{
+			shared_ptr <ColoredMesh> fireLeft (new ColoredMesh (1, 1, 32, Color (1.0f, 1.0f, 0)));
+			fireLeft->Init ();
+			fireLeft->Pos = Vector2D (0.495f, 1.4f);
+			fireLeft->Scale = Vector2D (0.16f, 0.2f);
+			mButtons[Buttons::FireLeft] = fireLeft;
+		}
+
+//		{
+//			mFireRight.reset (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0)));
+//			//...
+//		}
+
+		{
+			shared_ptr <ColoredMesh> c64Button (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 1.0f)));
+			c64Button->Init ();
+			c64Button->Pos = Vector2D (0.12f, 1.0f);
+			c64Button->Scale = Vector2D (0.09f, 0.09f);
+			mButtons[Buttons::C64] = c64Button;
+		}
 	}
 }
 
@@ -166,5 +410,58 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 //		mDown.reset (new ColoredMesh ());
 //		mFireLeft.reset (new ColoredMesh ());
 //		mFireRight.reset (new ColoredMesh ());
+	}
+}
+
+void GameScene::HandleKey (GameScene::Buttons button, bool pressed) {
+	switch (button) {
+		case Buttons::Left:
+			if (pressed) {
+				keyboard_key_pressed (30);
+			} else {
+				keyboard_key_released (30);
+			}
+			break;
+		case Buttons::Right:
+			if (pressed) {
+				keyboard_key_pressed (32);
+			} else {
+				keyboard_key_released (32);
+			}
+			break;
+		case Buttons::Up:
+			if (pressed) {
+				keyboard_key_pressed (17);
+			} else {
+				keyboard_key_released (17);
+			}
+			break;
+		case Buttons::Down:
+			if (pressed) {
+				keyboard_key_pressed (44);
+			} else {
+				keyboard_key_released (44);
+			}
+			break;
+		case Buttons::FireLeft:
+		case Buttons::FireRight:
+			//TODO: ... handle non demo state (42)
+			if (pressed) {
+				//keyboard_key_pressed (57);
+				keyboard_key_pressed (42);
+			} else {
+				keyboard_key_released (42);
+				//keyboard_key_released (57);
+			}
+			break;
+		case Buttons::C64: //Skip level
+			if (pressed) {
+				keyboard_key_pressed (29);
+			} else {
+				keyboard_key_released (29);
+			}
+			break;
+		default:
+			break;
 	}
 }

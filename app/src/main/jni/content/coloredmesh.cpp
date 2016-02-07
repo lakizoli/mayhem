@@ -4,7 +4,7 @@
 void ColoredMesh::Init () {
 	Mesh2D::Init ();
 
-	mTex = CreateColoredTexture (mWidth, mHeight, mBPP, Color (1.0f, 0, 0));
+	mTex = CreateColoredTexture (mWidth, mHeight, mBPP, mColor);
 	mVbo = NewTexturedVBO (mTex);
 }
 

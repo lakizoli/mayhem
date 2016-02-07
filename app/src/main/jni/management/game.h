@@ -78,9 +78,9 @@ public:
 
 //Input handlers
 public:
-	virtual void TouchDown (int fingerID, float x, float y);
-	virtual void TouchUp (int fingerID, float x, float y);
-	virtual void TouchMove (int fingerID, float x, float y);
+	virtual void TouchDown (int fingerID, float screenX, float screenY);
+	virtual void TouchUp (int fingerID, float screenX, float screenY);
+	virtual void TouchMove (int fingerID, float screenX, float screenY);
 
 //Helpers
 public:

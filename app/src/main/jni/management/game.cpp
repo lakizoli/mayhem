@@ -68,19 +68,19 @@ void Game::SetCurrentScene (shared_ptr < Scene > scene) {
 	}
 }
 
-void Game::TouchDown (int fingerID, float x, float y) {
+void Game::TouchDown (int fingerID, float screenX, float screenY) {
 	if (mCurrentScene != nullptr)
-		mCurrentScene->TouchDown (fingerID, x, y);
+		mCurrentScene->TouchDown (fingerID, ScreenToLocal (screenX, screenY));
 }
 
-void Game::TouchUp (int fingerID, float x, float y) {
+void Game::TouchUp (int fingerID, float screenX, float screenY) {
 	if (mCurrentScene != nullptr)
-		mCurrentScene->TouchUp (fingerID, x, y);
+		mCurrentScene->TouchUp (fingerID, ScreenToLocal (screenX, screenY));
 }
 
-void Game::TouchMove (int fingerID, float x, float y) {
+void Game::TouchMove (int fingerID, float screenX, float screenY) {
 	if (mCurrentScene != nullptr)
-		mCurrentScene->TouchMove (fingerID, x, y);
+		mCurrentScene->TouchMove (fingerID, ScreenToLocal (screenX, screenY));
 }
 
 void Game::InitProjection (int screenWidth, int screenHeight) {

@@ -28,6 +28,8 @@ class GLView extends GLSurfaceView {
 
 	//region init functions
 	private void init (Thread emulatorThread, boolean translucent, int depth, int stencil) {
+		setKeepScreenOn (true);
+
         /* By default, GLSurfaceView() creates a RGB_565 opaque surface.
 		 * If we want a translucent one, we should change the surface's
          * format here, using PixelFormat.TRANSLUCENT for GL Surfaces

@@ -5,7 +5,7 @@
 void TexAnimMesh::Init () {
 	Mesh2D::Init ();
 
-	mTex = CreateColoredTexture (mWidth, mHeight, mBPP, Color (1.0f, 0, 0));
+	mTex = CreateColoredTexture (mWidth, mHeight, mBPP, Color (0.0f, 0.0f, 0.0f));
 	mVbo = NewTexturedVBO (mTex);
 }
 

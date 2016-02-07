@@ -1,5 +1,7 @@
 #pragma once
 
+class Vector2D;
+
 ///
 /// Abstract base class of a scene in the game. (All coordinates are in local system!)
 ///
@@ -21,14 +23,14 @@ public:
 	virtual void Render () = 0;
 
 	/// Handle touch down input event.
-	virtual void TouchDown (int fingerID, float x, float y) {
+	virtual void TouchDown (int fingerID, const Vector2D& pos) {
 	}
 
 	/// Handle touch up input event.
-	virtual void TouchUp (int fingerID, float x, float y) {
+	virtual void TouchUp (int fingerID, const Vector2D& pos) {
 	}
 
 	/// Handle touch move input event.
-	virtual void TouchMove (int fingerID, float x, float y) {
+	virtual void TouchMove (int fingerID, const Vector2D& pos) {
 	}
 };
