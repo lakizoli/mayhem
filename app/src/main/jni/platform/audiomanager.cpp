@@ -34,6 +34,48 @@ AudioManager::Player::~Player () {
 	prefetch = nullptr;
 }
 
+AudioManager::PlayerPCM::PlayerPCM () :
+	player (nullptr),
+	play (nullptr),
+	volume (nullptr),
+	queue (nullptr) {
+}
+
+AudioManager::PlayerPCM::~PlayerPCM () {
+	if (play != nullptr) {
+		(*play)->SetPlayState (play, SL_PLAYSTATE_STOPPED);
+	}
+
+	if (player != nullptr) {
+		(*player)->Destroy (player);
+	}
+
+	player = nullptr;
+	play = nullptr;
+	volume = nullptr;
+	queue = nullptr;
+}
+
+AudioManager::PCMSample::PCMSample (size_t len) :
+	pos (0) {
+	buffer.resize (len, 0);
+}
+
+size_t AudioManager::PCMSample::Write (const uint8_t* src, size_t size) {
+	size_t currentSize = buffer.size ();
+	if (pos >= currentSize)
+		return 0;
+
+	size_t writeSize = size;
+	if (pos + writeSize > currentSize)
+		writeSize = currentSize - pos;
+
+	memcpy (&buffer[pos], src, writeSize);
+	pos += writeSize;
+
+	return writeSize;
+}
+
 int AudioManager::mNextID = 1;
 
 AudioManager::AudioManager () :
@@ -41,6 +83,9 @@ AudioManager::AudioManager () :
 	mEngineObject (nullptr),
 	mEngine (nullptr),
 	mOutputMixObject (nullptr),
+	mPCMNumChannels (0),
+	mPCMSampleRate (0),
+	mPCMBytesPerSample (0),
 	mAssetManager (nullptr) {
 }
 
@@ -82,6 +127,13 @@ bool AudioManager::Init (AAssetManager * assetManager) {
 void AudioManager::Shutdown () {
 	if (!mInited)
 		return;
+
+	mPCMPlayer.reset ();
+	mPCMs.clear ();
+
+	mPCMNumChannels = 0;
+	mPCMSampleRate = 0;
+	mPCMBytesPerSample = 0;
 
 	for (auto& it : mPlayers)
 		delete it.second;
@@ -317,6 +369,51 @@ bool AudioManager::IsEnded (int soundID) {
 	}
 
 	return isEnded;
+}
+
+void AudioManager::OpenPCM (int numChannels, int sampleRate, int bytesPerSample) {
+	CHECKMSG (numChannels > 0, "AudioManager::OpenPCM () - numChannels must be greater than 0!");
+	CHECKMSG (sampleRate > 0, "AudioManager::OpenPCM () - sampleRate must be greater than 0!");
+	CHECKMSG (bytesPerSample > 0, "AudioManager::OpenPCM () - bytesPerSample must be greater than 0!");
+
+	mPCMNumChannels = numChannels;
+	mPCMSampleRate = sampleRate;
+	mPCMBytesPerSample = bytesPerSample;
+
+	mPCMs.clear ();
+	mPCMPlayer.reset (new PlayerPCM ());
+}
+
+void AudioManager::ClosePCM () {
+	mPCMPlayer.reset ();
+	mPCMs.clear ();
+}
+
+void AudioManager::WritePCM (const uint8_t* buffer, size_t size) {
+	CHECKMSG (buffer != nullptr, "AudioManager::WritePCM () - buffer cannot be nullptr!");
+	CHECKMSG (size > 0, "AudioManager::WritePCM () - size must be greater than 0!");
+	CHECKMSG (mPCMPlayer != nullptr, "AudioManager::WritePCM () - PCM device must be opened before first write!");
+
+	if (mPCMs.size () <= 0)
+		mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (mPCMBytesPerSample)));
+
+	size_t writeSize = size;
+	size_t writtenBytes = 0;
+	while ((writtenBytes = mPCMs[mPCMs.size () - 1]->Write (buffer, writeSize)) < writeSize) {
+		size_t remaining = size - writtenBytes;
+		buffer += writtenBytes;
+		size -= writtenBytes;
+
+		mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (mPCMBytesPerSample)));
+	}
+}
+
+void AudioManager::PlayPCM (float volume) {
+	//TODO: ... (lejatszasi seged: http://www.eerock.com/blog/android-opensl-es-loading-and-playing-wav-files/)
+}
+
+void AudioManager::StopPCM () {
+	//TODO: ...
 }
 
 void SLAPIENTRY AudioManager::PlayCallback (SLPlayItf play, void *context, SLuint32 event) {

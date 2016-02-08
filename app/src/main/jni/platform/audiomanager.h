@@ -19,6 +19,25 @@ private:
 		~Player ();
 	};
 
+	struct PlayerPCM {
+		SLObjectItf player;
+		SLPlayItf play;
+		SLVolumeItf volume;
+		SLAndroidSimpleBufferQueueItf queue;
+
+		PlayerPCM ();
+		~PlayerPCM ();
+	};
+
+	struct PCMSample {
+		vector<uint8_t> buffer;
+		size_t pos;
+
+		PCMSample (size_t len);
+		size_t Write (const uint8_t* src, size_t size);
+	};
+
+//Construction
 private:
 	AudioManager ();
 
@@ -33,6 +52,8 @@ public:
 	bool Init (AAssetManager* assetManager);
 	void Shutdown ();
 
+//Asset player interface
+public:
 	int Load (const string& assetName);
 	void Unload (int soundID);
 
@@ -40,9 +61,21 @@ public:
 	void Stop (int soundID);
 	bool IsEnded (int soundID);
 
+//PCM player interface (in memory)
+public:
+	void OpenPCM (int numChannels, int sampleRate, int bytesPerSample);
+	void ClosePCM ();
+
+	void WritePCM (const uint8_t* buffer, size_t size);
+
+	void PlayPCM (float volume);
+	void StopPCM ();
+
+//Helper methods
 private:
 	static void SLAPIENTRY PlayCallback (SLPlayItf play, void *context, SLuint32 event);
 
+//Data
 private:
 	static int mNextID;
 
@@ -53,6 +86,12 @@ private:
 	SLObjectItf mOutputMixObject;
 
 	map<int, Player*> mPlayers;
+
+	deque<shared_ptr<PCMSample>> mPCMs;
+	shared_ptr<PlayerPCM> mPCMPlayer;
+	int mPCMNumChannels;
+	int mPCMSampleRate;
+	int mPCMBytesPerSample;
 
 	AAssetManager* mAssetManager;
 };

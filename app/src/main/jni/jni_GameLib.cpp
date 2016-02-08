@@ -4,11 +4,13 @@
 #include "game/mayhemgame.h"
 #include "platform/androidcontentmanager.h"
 #include "platform/androidutil.h"
+#include "platform/audiomanager.h"
 #include "management/game.h"
 
 //c64emu declarations
 extern "C" int main_program (int argc, char **argv);
 
+//Video callbacks
 typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint32_t visible_width, uint32_t visible_height, uint8_t** buffer, uint32_t* pitch);
 extern "C" void video_android_set_init_callback (t_fn_init_canvas init_canvas);
 
@@ -17,6 +19,13 @@ extern "C" void video_android_set_locking_callbacks (t_fn_lock_canvas lock_canva
 
 typedef void (*t_fn_speed_callback) (double speed, double frame_rate, int warp_enabled);
 extern "C" void vsyncarch_android_set_speed_callback (t_fn_speed_callback fn_speed_callback);
+
+//Sound callbacks
+typedef void (*t_fn_sound_init) (int numChannels, int sampleRate, int bytesPerSample);
+typedef void (*t_fn_sound_close) ();
+typedef void (*t_fn_sound_write) (const uint8_t* buffer, size_t size);
+
+extern "C" void sound_android_set_pcm_callbacks (t_fn_sound_init sound_init, t_fn_sound_close sound_close, t_fn_sound_write sound_write);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Game data
@@ -68,6 +77,21 @@ static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
 		ss << "FPS: " << fps;
 		Game::ContentManager ().DisplayStatus (ss.str ());
 	}
+}
+
+static void SoundInit (int numChannels, int sampleRate, int bytesPerSample) {
+	AudioManager& man = AudioManager::Get ();
+	man.OpenPCM (numChannels, sampleRate, bytesPerSample);
+}
+
+static void SoundClose () {
+	AudioManager& man = AudioManager::Get ();
+	man.ClosePCM ();
+}
+
+static void SoundWrite (const uint8_t* buffer, size_t size) {
+	AudioManager& man = AudioManager::Get ();
+	man.WritePCM (buffer, size);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,6 +226,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	video_android_set_init_callback (&InitCanvas);
 	video_android_set_locking_callbacks (&LockCanvas, &UnlockCanvas);
 	vsyncarch_android_set_speed_callback (&DisplaySpeed);
+	sound_android_set_pcm_callbacks (&SoundInit, &SoundClose, &SoundWrite);
 
 	//Call main function of emulator
 	int res = main_program (argc, argv);
