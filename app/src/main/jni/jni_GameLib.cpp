@@ -81,7 +81,7 @@ static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
 
 static void SoundInit (int numChannels, int sampleRate, int bytesPerSample) {
 	AudioManager& man = AudioManager::Get ();
-	man.OpenPCM (numChannels, sampleRate, bytesPerSample);
+	man.OpenPCM (1.0f, numChannels, sampleRate, bytesPerSample);
 }
 
 static void SoundClose () {

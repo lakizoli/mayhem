@@ -149,7 +149,7 @@ void GameScene::Update (float elapsedTime) {
 			}
 
 			//Draw the screen of the game
-			if (mState == GameStates::Game) {
+			/*if (mState == GameStates::Game)*/ {
 				mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &mC64Pixels[0]);
 			}
 			g_engine.canvas_dirty = false;

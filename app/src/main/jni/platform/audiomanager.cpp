@@ -35,6 +35,7 @@ AudioManager::Player::~Player () {
 }
 
 AudioManager::PlayerPCM::PlayerPCM () :
+	bufferIndex (-1),
 	player (nullptr),
 	play (nullptr),
 	volume (nullptr),
@@ -76,6 +77,11 @@ size_t AudioManager::PCMSample::Write (const uint8_t* src, size_t size) {
 	return writeSize;
 }
 
+void AudioManager::PCMSample::Rewind () {
+	memset (&buffer[0], 0, buffer.size () * sizeof (decltype (buffer)::value_type));
+	pos = 0;
+}
+
 int AudioManager::mNextID = 1;
 
 AudioManager::AudioManager () :
@@ -86,6 +92,8 @@ AudioManager::AudioManager () :
 	mPCMNumChannels (0),
 	mPCMSampleRate (0),
 	mPCMBytesPerSample (0),
+	mPCMWriteBufferIndex (0),
+	mPCMVolume (0),
 	mAssetManager (nullptr) {
 }
 
@@ -134,6 +142,8 @@ void AudioManager::Shutdown () {
 	mPCMNumChannels = 0;
 	mPCMSampleRate = 0;
 	mPCMBytesPerSample = 0;
+	mPCMWriteBufferIndex = 0;
+	mPCMVolume = 0;
 
 	for (auto& it : mPlayers)
 		delete it.second;
@@ -371,7 +381,7 @@ bool AudioManager::IsEnded (int soundID) {
 	return isEnded;
 }
 
-void AudioManager::OpenPCM (int numChannels, int sampleRate, int bytesPerSample) {
+void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample) {
 	CHECKMSG (numChannels > 0, "AudioManager::OpenPCM () - numChannels must be greater than 0!");
 	CHECKMSG (sampleRate > 0, "AudioManager::OpenPCM () - sampleRate must be greater than 0!");
 	CHECKMSG (bytesPerSample > 0, "AudioManager::OpenPCM () - bytesPerSample must be greater than 0!");
@@ -379,9 +389,14 @@ void AudioManager::OpenPCM (int numChannels, int sampleRate, int bytesPerSample)
 	mPCMNumChannels = numChannels;
 	mPCMSampleRate = sampleRate;
 	mPCMBytesPerSample = bytesPerSample;
+	mPCMWriteBufferIndex = 0;
+	mPCMVolume = volume;
 
 	mPCMs.clear ();
-	mPCMPlayer.reset (new PlayerPCM ());
+	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample ((size_t) mPCMBytesPerSample)));
+	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample ((size_t) mPCMBytesPerSample)));
+
+	mPCMPlayer.reset ();
 }
 
 void AudioManager::ClosePCM () {
@@ -392,33 +407,98 @@ void AudioManager::ClosePCM () {
 void AudioManager::WritePCM (const uint8_t* buffer, size_t size) {
 	CHECKMSG (buffer != nullptr, "AudioManager::WritePCM () - buffer cannot be nullptr!");
 	CHECKMSG (size > 0, "AudioManager::WritePCM () - size must be greater than 0!");
-	CHECKMSG (mPCMPlayer != nullptr, "AudioManager::WritePCM () - PCM device must be opened before first write!");
-
-	if (mPCMs.size () <= 0)
-		mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (mPCMBytesPerSample)));
 
 	size_t writeSize = size;
 	size_t writtenBytes = 0;
-	while ((writtenBytes = mPCMs[mPCMs.size () - 1]->Write (buffer, writeSize)) < writeSize) {
+	while ((writtenBytes = mPCMs[mPCMWriteBufferIndex]->Write (buffer, writeSize)) < writeSize) {
 		size_t remaining = size - writtenBytes;
 		buffer += writtenBytes;
 		size -= writtenBytes;
-
-		mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (mPCMBytesPerSample)));
+		writeSize = size;
+		mPCMWriteBufferIndex = (mPCMWriteBufferIndex + 1) % mPCMs.size ();
+		mPCMs[mPCMWriteBufferIndex]->Rewind ();
 	}
+
+	if (mPCMPlayer == nullptr) //Start playing in the first moment
+		StartPCM ();
 }
 
-void AudioManager::PlayPCM (float volume) {
-	//TODO: ... (lejatszasi seged: http://www.eerock.com/blog/android-opensl-es-loading-and-playing-wav-files/)
-}
+void AudioManager::StartPCM () {
+	CHECKMSG (mInited, "AudioManager::StartPCM () - Can be called only after Init ()!");
+	CHECKMSG (mPCMPlayer == nullptr, "AudioManager::StartPCM () - Can be called only after Init ()!");
 
-void AudioManager::StopPCM () {
-	//TODO: ...
+	// configure audio source
+	SLDataLocator_AndroidFD loc_fd = {
+		SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
+		2
+	};
+
+	SLDataFormat_PCM format_pcm;
+	format_pcm.formatType       = SL_DATAFORMAT_PCM;
+	format_pcm.numChannels      = (SLuint32) mPCMNumChannels;
+	format_pcm.samplesPerSec    = (SLuint32) mPCMSampleRate * 1000;
+	format_pcm.bitsPerSample    = SL_PCMSAMPLEFORMAT_FIXED_16;
+	format_pcm.containerSize    = SL_PCMSAMPLEFORMAT_FIXED_16;
+	format_pcm.channelMask      = SL_SPEAKER_FRONT_CENTER;
+	format_pcm.endianness       = SL_BYTEORDER_LITTLEENDIAN;
+
+	SLDataSource audioSrc = {
+		&loc_fd,
+		&format_pcm
+	};
+
+	// configure audio sink
+	SLDataLocator_OutputMix loc_outmix = {
+		SL_DATALOCATOR_OUTPUTMIX,
+		mOutputMixObject
+	};
+
+	SLDataSink audioSnk = {
+		&loc_outmix,
+		NULL
+	};
+
+	// allocate played sound instance
+	mPCMPlayer.reset (new PlayerPCM ());
+	PlayerPCM* player = mPCMPlayer.get ();
+
+	// create audio player
+	const unsigned int NUM_INTERFACES = 3;
+	const SLInterfaceID ids[NUM_INTERFACES] = { SL_IID_PLAY, SL_IID_VOLUME, SL_IID_ANDROIDSIMPLEBUFFERQUEUE };
+	const SLboolean req[NUM_INTERFACES] = { SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE };
+
+	SLresult result = (*mEngine)->CreateAudioPlayer (mEngine, &player->player, &audioSrc, &audioSnk, NUM_INTERFACES, ids, req);
+	CHECKMSG (result == SL_RESULT_SUCCESS && player->player != nullptr, "AudioManager::StartPCM () - CreateAudioPlayer () failed");
+
+	// realize the player
+	result = (*player->player)->Realize (player->player, SL_BOOLEAN_FALSE);
+	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::StartPCM () - Player::Realize () failed");
+
+	// get the play interface
+	result = (*player->player)->GetInterface (player->player, SL_IID_PLAY, &player->play);
+	CHECKMSG (result == SL_RESULT_SUCCESS && player->play != nullptr, "AudioManager::StartPCM () - Player::GetInterface (SL_IID_PLAY) failed");
+
+	// get the volume interface
+	result = (*player->player)->GetInterface (player->player, SL_IID_VOLUME, &player->volume);
+	CHECKMSG (result == SL_RESULT_SUCCESS && player->volume != nullptr, "AudioManager::StartPCM () - Player::GetInterface (SL_IID_VOLUME) failed");
+
+	// get the simple buffer queue interface
+	result = (*player->player)->GetInterface (player->player, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &player->queue);
+	CHECKMSG (result == SL_RESULT_SUCCESS && player->queue != nullptr, "AudioManager::StartPCM () - Player::GetInterface (SL_IID_ANDROIDSIMPLEBUFFERQUEUE) failed");
+
+	result = (*player->queue)->RegisterCallback (player->queue, AudioManager::QueueCallback, this);
+	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::StartPCM () - Queue::RegisterCallback () failed");
+
+	QueueCallback (player->queue, this);
+
+	//Start playing
+	result = (*player->play)->SetPlayState (player->play, SL_PLAYSTATE_PLAYING);
+	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::StartPCM () - Play::SetPlayState (Play) failed");
 }
 
 void SLAPIENTRY AudioManager::PlayCallback (SLPlayItf play, void *context, SLuint32 event) {
-	CHECKMSG (play != nullptr, "play_callback () - play cannot be nullptr!");
-	CHECKMSG (context != nullptr, "play_callback () - context cannot be nullptr!");
+	CHECKMSG (play != nullptr, "AudioManager::PlayCallback () - play cannot be nullptr!");
+	CHECKMSG (context != nullptr, "AudioManager::PlayCallback () - context cannot be nullptr!");
 
 	if (event & SL_PLAYEVENT_HEADATEND) {
 		struct Player* player = (struct Player*) context;
@@ -431,4 +511,22 @@ void SLAPIENTRY AudioManager::PlayCallback (SLPlayItf play, void *context, SLuin
 			}
 		}
 	}
+}
+
+void SLAPIENTRY AudioManager::QueueCallback (SLAndroidSimpleBufferQueueItf queue, void *context) {
+	CHECKMSG (queue != nullptr, "AudioManager::QueueCallback () - queue cannot be nullptr!");
+	CHECKMSG (context != nullptr, "AudioManager::QueueCallback () - context cannot be nullptr!");
+
+	AudioManager* man = (AudioManager*)context;
+	shared_ptr<PlayerPCM> player = man->mPCMPlayer;
+	CHECKMSG (player != nullptr, "AudioManager::QueueCallback () - player cannot be nullptr!");
+
+	player->bufferIndex = (player->bufferIndex + 1) % 2;
+	LOGI ("starting to play buffer! index: %d", player->bufferIndex);
+
+	shared_ptr<PCMSample> sample = man->mPCMs[player->bufferIndex];
+	CHECKMSG (sample != nullptr, "AudioManager::QueueCallback () - sample cannot be nullptr!");
+
+	SLresult result = (*queue)->Enqueue (queue, &(sample->buffer[0]), (SLuint32) sample->buffer.size ());
+	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::QueueCallback () - Enqueue of new sample failed!");
 }

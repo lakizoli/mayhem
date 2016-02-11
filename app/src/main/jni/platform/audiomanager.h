@@ -20,6 +20,7 @@ private:
 	};
 
 	struct PlayerPCM {
+		int bufferIndex;
 		SLObjectItf player;
 		SLPlayItf play;
 		SLVolumeItf volume;
@@ -35,6 +36,7 @@ private:
 
 		PCMSample (size_t len);
 		size_t Write (const uint8_t* src, size_t size);
+		void Rewind ();
 	};
 
 //Construction
@@ -63,17 +65,17 @@ public:
 
 //PCM player interface (in memory)
 public:
-	void OpenPCM (int numChannels, int sampleRate, int bytesPerSample);
+	void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample);
 	void ClosePCM ();
 
 	void WritePCM (const uint8_t* buffer, size_t size);
 
-	void PlayPCM (float volume);
-	void StopPCM ();
-
 //Helper methods
 private:
+	void StartPCM ();
+
 	static void SLAPIENTRY PlayCallback (SLPlayItf play, void *context, SLuint32 event);
+	static void SLAPIENTRY QueueCallback (SLAndroidSimpleBufferQueueItf queue, void *context);
 
 //Data
 private:
@@ -87,11 +89,13 @@ private:
 
 	map<int, Player*> mPlayers;
 
-	deque<shared_ptr<PCMSample>> mPCMs;
+	vector<shared_ptr<PCMSample>> mPCMs;
 	shared_ptr<PlayerPCM> mPCMPlayer;
 	int mPCMNumChannels;
 	int mPCMSampleRate;
 	int mPCMBytesPerSample;
+	int mPCMWriteBufferIndex;
+	float mPCMVolume;
 
 	AAssetManager* mAssetManager;
 };
