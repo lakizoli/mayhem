@@ -433,13 +433,41 @@ void AudioManager::StartPCM () {
 		2
 	};
 
+	SLuint16 bitsPerSample = (SLuint16) (mPCMBytesPerSample / mPCMSampleRate * 8);
+
+	SLuint16 containerSize = 0;
+	switch (bitsPerSample) {
+		case SL_PCMSAMPLEFORMAT_FIXED_8:
+			containerSize = SL_PCMSAMPLEFORMAT_FIXED_8;
+			break;
+		case SL_PCMSAMPLEFORMAT_FIXED_16:
+			containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+			break;
+		default:
+		case SL_PCMSAMPLEFORMAT_FIXED_20:
+		case SL_PCMSAMPLEFORMAT_FIXED_24:
+		case SL_PCMSAMPLEFORMAT_FIXED_28:
+		case SL_PCMSAMPLEFORMAT_FIXED_32:
+			containerSize = SL_PCMSAMPLEFORMAT_FIXED_32;
+			break;
+	}
+
+	SLuint32 channelMask = 0;
+	if (mPCMNumChannels == 1)
+		channelMask = SL_SPEAKER_FRONT_CENTER;
+	else if (mPCMNumChannels == 2)
+		channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
+	else {
+		CHECKMSG (mPCMNumChannels == 1 || mPCMNumChannels == 2, "Number of channels must be 1 or 2! Other channel count is not supported yet.");
+	}
+
 	SLDataFormat_PCM format_pcm;
 	format_pcm.formatType       = SL_DATAFORMAT_PCM;
 	format_pcm.numChannels      = (SLuint32) mPCMNumChannels;
 	format_pcm.samplesPerSec    = (SLuint32) mPCMSampleRate * 1000;
-	format_pcm.bitsPerSample    = SL_PCMSAMPLEFORMAT_FIXED_16;
-	format_pcm.containerSize    = SL_PCMSAMPLEFORMAT_FIXED_16;
-	format_pcm.channelMask      = SL_SPEAKER_FRONT_CENTER;
+	format_pcm.bitsPerSample    = bitsPerSample;
+	format_pcm.containerSize    = containerSize;
+	format_pcm.channelMask      = channelMask;
 	format_pcm.endianness       = SL_BYTEORDER_LITTLEENDIAN;
 
 	SLDataSource audioSrc = {
