@@ -374,7 +374,7 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 		{
 			shared_ptr <ColoredMesh> up (new ColoredMesh (1, 1, 32, Color (0, 0, 1.0f, 0.5f)));
 			up->Init ();
-			up->Pos = Vector2D (0.81f, 1.31f);
+			up->Pos = Vector2D (0.82f, 1.31f);
 			up->Scale = Vector2D (0.28f, 0.18f);
 			mButtons[Buttons::Up] = up;
 		}
@@ -382,7 +382,7 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 		{
 			shared_ptr <ColoredMesh> down (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0, 0.5f)));
 			down->Init ();
-			down->Pos = Vector2D (0.81f, 1.51f);
+			down->Pos = Vector2D (0.82f, 1.51f);
 			down->Scale = Vector2D (0.28f, 0.18f);
 			mButtons[Buttons::Down] = down;
 		}
