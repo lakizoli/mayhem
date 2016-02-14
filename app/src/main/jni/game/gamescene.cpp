@@ -186,10 +186,10 @@ void GameScene::Render () {
 	if (mC64Screen)
 		mC64Screen->Render ();
 
-	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
-		if (it->second)
-			it->second->Render ();
-	}
+//	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
+//		if (it->second)
+//			it->second->Render ();
+//	}
 }
 
 void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
@@ -388,17 +388,12 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 		}
 
 		{
-			shared_ptr <ColoredMesh> fireLeft (new ColoredMesh (1, 1, 32, Color (1.0f, 1.0f, 0, 0.5f)));
-			fireLeft->Init ();
-			fireLeft->Pos = Vector2D (0.495f, 1.4f);
-			fireLeft->Scale = Vector2D (0.32f, 0.4f);
-			mButtons[Buttons::FireLeft] = fireLeft;
+			shared_ptr <ColoredMesh> fire (new ColoredMesh (1, 1, 32, Color (1.0f, 1.0f, 0, 0.5f)));
+			fire->Init ();
+			fire->Pos = Vector2D (0.495f, 1.4f);
+			fire->Scale = Vector2D (0.32f, 0.4f);
+			mButtons[Buttons::Fire] = fire;
 		}
-
-//		{
-//			mFireRight.reset (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0)));
-//			//...
-//		}
 
 		{
 			shared_ptr <ColoredMesh> c64Button (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 1.0f, 0.5f)));
@@ -414,25 +409,73 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 	Game& game = Game::Get ();
 
 	//Graphics
-	//TODO: ...
+	if (mBackground) {
+		mBackground->Shutdown ();
+		mBackground.reset ();
+	}
+
+	mBackground.reset (new ImageMesh ("main_background_horizontal.png"));
+	mBackground->Init ();
+	mBackground->Pos = game.Size () / 2.0f;
+	mBackground->Scale = game.Size () * game.ScreenSize () / game.RefSize ();
+
 
 	//place C64 screen to the right position
 	if (mC64Screen) {
-		mC64Screen->Pos = Vector2D (0.5f * game.Width (), 0.5f);
+		mC64Screen->Pos = Vector2D (0.5f * game.Width (), 0.517f);
 	}
 
 	//Init buttons
 	if (initButtons) {
 		DestroyButtons ();
 
-		//TODO: ...
+		{
+			shared_ptr <ColoredMesh> left (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0, 0.5f)));
+			left->Init ();
+			left->Pos = Vector2D (0.095f, 0.81f);
+			left->Scale = Vector2D (0.14f, 0.35f);
+			mButtons[Buttons::Left] = left;
+		}
 
-//		mLeft.reset (new ColoredMesh ());
-//		mRight.reset (new ColoredMesh ());
-//		mUp.reset (new ColoredMesh ());
-//		mDown.reset (new ColoredMesh ());
-//		mFireLeft.reset (new ColoredMesh ());
-//		mFireRight.reset (new ColoredMesh ());
+		{
+			shared_ptr <ColoredMesh> right (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 0, 0.5f)));
+			right->Init ();
+			right->Pos = Vector2D (0.245f, 0.81f);
+			right->Scale = Vector2D (0.14f, 0.35f);
+			mButtons[Buttons::Right] = right;
+		}
+
+		{
+			shared_ptr <ColoredMesh> up (new ColoredMesh (1, 1, 32, Color (0, 0, 1.0f, 0.5f)));
+			up->Init ();
+			up->Pos = Vector2D (1.48f, 0.73f);
+			up->Scale = Vector2D (0.28f, 0.16f);
+			mButtons[Buttons::Up] = up;
+		}
+
+		{
+			shared_ptr <ColoredMesh> down (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0, 0.5f)));
+			down->Init ();
+			down->Pos = Vector2D (1.48f, 0.90f);
+			down->Scale = Vector2D (0.28f, 0.16f);
+			mButtons[Buttons::Down] = down;
+		}
+
+		{
+			shared_ptr <ColoredMesh> fire (new ColoredMesh (1, 1, 32, Color (1.0f, 1.0f, 0, 0.5f)));
+			fire->Init ();
+			fire->Pos = Vector2D (1.48f, 0.48f);
+			fire->Scale = Vector2D (0.25f, 0.25f);
+			mButtons[Buttons::Fire] = fire;
+		}
+
+		{
+			shared_ptr <ColoredMesh> c64Button (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 1.0f, 0.5f)));
+			c64Button->Init ();
+			c64Button->Pos = Vector2D (0.09f, 0.355f);
+			c64Button->Scale = Vector2D (0.18f, 0.18f);
+			mButtons[Buttons::C64] = c64Button;
+		}
 	}
 }
 
@@ -466,8 +509,7 @@ void GameScene::HandleKey (GameScene::Buttons button, bool pressed) {
 				keyboard_key_released (80);
 			}
 			break;
-		case Buttons::FireLeft:
-		case Buttons::FireRight:
+		case Buttons::Fire:
 			if (pressed) {
 				keyboard_key_pressed (100);
 			} else {
