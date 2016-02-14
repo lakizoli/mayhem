@@ -28,9 +28,8 @@ private:
 		Right = 	0x0002,
 		Up = 		0x0004,
 		Down = 		0x0008,
-		FireLeft = 	0x0010,
-		FireRight = 0x0020,
-		C64 = 		0x0040
+		Fire = 		0x0010,
+		C64 = 		0x0020
 	};
 
 //Data
