@@ -4,6 +4,7 @@
 
 class TexAnimMesh;
 class ColoredMesh;
+class ImageMesh;
 
 class GameScene : public Scene {
 //Definitions
@@ -34,6 +35,7 @@ private:
 
 //Data
 private:
+	//C64 emulator specific data
 	shared_ptr<TexAnimMesh> mC64Screen;
 	vector<uint8_t> mC64Pixels;
 
@@ -46,6 +48,10 @@ private:
 
 	GameStates mState;
 
+	//Graphic data
+	shared_ptr<ImageMesh> mBackground;
+
+	//Direction data
 	map<Buttons, shared_ptr<ColoredMesh>> mButtons;
 	uint32_t mButtonStates;
 	map<int, Buttons> mButtonFingerIDs;

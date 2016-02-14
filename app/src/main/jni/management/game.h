@@ -86,12 +86,15 @@ public:
 public:
 	float Width () const { return mWidth; }
 	float Height () const { return mHeight; }
+	Vector2D Size () const { return Vector2D (mWidth, mHeight); }
 
 	int ScreenWidth () const { return mScreenWidth; }
 	int ScreenHeight () const { return mScreenHeight; }
+	Vector2D ScreenSize () const { return Vector2D ((float)mScreenWidth, (float)mScreenHeight); }
 
 	int RefWidth () const { return mRefWidth; }
 	int RefHeight () const { return mRefHeight; }
+	Vector2D RefSize () const { return Vector2D ((float)mRefWidth, (float)mRefHeight); }
 
 	Vector2D LocalToScreen (float localX, float localY) const {
 		return Vector2D (localX * mScreenWidth / mWidth, localY * mScreenHeight / mHeight);

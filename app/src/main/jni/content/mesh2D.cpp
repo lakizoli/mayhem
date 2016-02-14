@@ -125,10 +125,10 @@ vector <GLuint> Mesh2D::NewTexturedVBO (GLuint texID, const vector <float> &vert
 	GLuint vboID = 0;
 	if (vertices.size () <= 0) {
 		vector <float> quad ({
-								 -1.0f, -1.0f,
-								 1.0f, -1.0f,
-								 -1.0f, 1.0f,
-								 1.0f, 1.0f
+								 -0.5f, -0.5f,
+								 0.5f, -0.5f,
+								 -0.5f, 0.5f,
+								 0.5f, 0.5f
 							 });
 
 		vboID = NewVBO (quad);
