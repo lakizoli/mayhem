@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../management/scene.h"
+#include "../content/vector2D.h"
+#include "../content/color.h"
 
 class TexAnimMesh;
 class ColoredMesh;
@@ -49,6 +51,7 @@ private:
 
 	//Graphic data
 	shared_ptr<ImageMesh> mBackground;
+	map<Buttons, shared_ptr<ImageMesh>> mButtonPresses;
 
 	//Direction data
 	map<Buttons, shared_ptr<ColoredMesh>> mButtons;
@@ -81,6 +84,7 @@ private:
 	void ConvertBGRAInGame ();
 
 	void DestroyButtons ();
+	void CreateButton (Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale, const string& pressAsset, const Vector2D& posPress, const Vector2D& scalePress);
 
 	void InitVerticalLayout (bool initButtons);
 	void InitHorizontalLayout (bool initButtons);

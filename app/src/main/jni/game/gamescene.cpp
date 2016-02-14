@@ -190,6 +190,19 @@ void GameScene::Render () {
 //		if (it->second)
 //			it->second->Render ();
 //	}
+
+	if (mButtonStates & (uint32_t)Buttons::Left)
+		mButtonPresses[Buttons::Left]->Render ();
+	if (mButtonStates & (uint32_t)Buttons::Right)
+		mButtonPresses[Buttons::Right]->Render ();
+	if (mButtonStates & (uint32_t)Buttons::Up)
+		mButtonPresses[Buttons::Up]->Render ();
+	if (mButtonStates & (uint32_t)Buttons::Down)
+		mButtonPresses[Buttons::Down]->Render ();
+	if (mButtonStates & (uint32_t)Buttons::Fire)
+		mButtonPresses[Buttons::Fire]->Render ();
+	if (mButtonStates & (uint32_t)Buttons::C64)
+		mButtonPresses[Buttons::C64]->Render ();
 }
 
 void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
@@ -322,6 +335,12 @@ void GameScene::ConvertBGRAInGame () {
 }
 
 void GameScene::DestroyButtons () {
+	for (auto it = mButtonPresses.begin ();it != mButtonPresses.end ();++it) {
+		if (it->second)
+			it->second->Shutdown ();
+	}
+	mButtonPresses.clear ();
+
 	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
 		if (it->second)
 			it->second->Shutdown ();
@@ -330,6 +349,21 @@ void GameScene::DestroyButtons () {
 
 	mButtonStates = (uint32_t) Buttons::None;
 	mButtonFingerIDs.clear ();
+}
+
+void GameScene::CreateButton (Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale,
+							  const string& pressAsset, const Vector2D& posPress, const Vector2D& scalePress) {
+	shared_ptr <ColoredMesh> left (new ColoredMesh (1, 1, 32, color));
+	left->Init ();
+	left->Pos = pos;
+	left->Scale = scale;
+	mButtons[button] = left;
+
+	shared_ptr <ImageMesh> leftPress (new ImageMesh (pressAsset));
+	leftPress->Init ();
+	leftPress->Pos = posPress;
+	leftPress->Scale = scalePress;
+	mButtonPresses[button] = leftPress;
 }
 
 void GameScene::InitVerticalLayout (bool initButtons) {
@@ -355,53 +389,12 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 	if (initButtons) {
 		DestroyButtons ();
 
-		{
-			shared_ptr <ColoredMesh> left (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0, 0.5f)));
-			left->Init ();
-			left->Pos = Vector2D (0.1f, 1.4f);
-			left->Scale = Vector2D (0.14f, 0.4f);
-			mButtons[Buttons::Left] = left;
-		}
-
-		{
-			shared_ptr <ColoredMesh> right (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 0, 0.5f)));
-			right->Init ();
-			right->Pos = Vector2D (0.25f, 1.4f);
-			right->Scale = Vector2D (0.14f, 0.4f);
-			mButtons[Buttons::Right] = right;
-		}
-
-		{
-			shared_ptr <ColoredMesh> up (new ColoredMesh (1, 1, 32, Color (0, 0, 1.0f, 0.5f)));
-			up->Init ();
-			up->Pos = Vector2D (0.82f, 1.31f);
-			up->Scale = Vector2D (0.28f, 0.18f);
-			mButtons[Buttons::Up] = up;
-		}
-
-		{
-			shared_ptr <ColoredMesh> down (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0, 0.5f)));
-			down->Init ();
-			down->Pos = Vector2D (0.82f, 1.51f);
-			down->Scale = Vector2D (0.28f, 0.18f);
-			mButtons[Buttons::Down] = down;
-		}
-
-		{
-			shared_ptr <ColoredMesh> fire (new ColoredMesh (1, 1, 32, Color (1.0f, 1.0f, 0, 0.5f)));
-			fire->Init ();
-			fire->Pos = Vector2D (0.495f, 1.4f);
-			fire->Scale = Vector2D (0.32f, 0.4f);
-			mButtons[Buttons::Fire] = fire;
-		}
-
-		{
-			shared_ptr <ColoredMesh> c64Button (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 1.0f, 0.5f)));
-			c64Button->Init ();
-			c64Button->Pos = Vector2D (0.09f, 1.01f);
-			c64Button->Scale = Vector2D (0.18f, 0.18f);
-			mButtons[Buttons::C64] = c64Button;
-		}
+		CreateButton (Buttons::Left,  Color (1.0f, 0, 0, 0.5f),    Vector2D (0.1f , 1.4f),  Vector2D (0.14f, 0.4f), "left_press.png",  Vector2D (0.1f , 1.4f),  Vector2D (0.14f, 0.4f));
+		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f),    Vector2D (0.25f, 1.4f),  Vector2D (0.14f, 0.4f), "right_press.png", Vector2D (0.25f, 1.4f),  Vector2D (0.14f, 0.4f));
+		CreateButton (Buttons::Up,    Color (0, 0, 1.0f, 0.5f),    Vector2D (0.82f, 1.31f), Vector2D (0.28f, 0.18f), "up_press.png",   Vector2D (0.82f, 1.31f), Vector2D (0.28f, 0.18f));
+		CreateButton (Buttons::Down,  Color (1.0f, 0, 0, 0.5f),    Vector2D (0.82f, 1.51f), Vector2D (0.28f, 0.18f), "down_press.png", Vector2D (0.82f, 1.51f), Vector2D (0.28f, 0.18f));
+		CreateButton (Buttons::Fire,  Color (1.0f, 1.0f, 0, 0.5f), Vector2D (0.495f, 1.4f), Vector2D (0.32f, 0.4f), "fire_press.png",  Vector2D (0.495f, 1.4f), Vector2D (0.32f, 0.4f));
+		CreateButton (Buttons::C64,   Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 1.01f), Vector2D (0.18f, 0.18f), "c64_press.png", Vector2D (0.09f, 1.01f), Vector2D (0.18f, 0.18f));
 	}
 }
 
@@ -429,53 +422,12 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 	if (initButtons) {
 		DestroyButtons ();
 
-		{
-			shared_ptr <ColoredMesh> left (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0, 0.5f)));
-			left->Init ();
-			left->Pos = Vector2D (0.095f, 0.81f);
-			left->Scale = Vector2D (0.14f, 0.35f);
-			mButtons[Buttons::Left] = left;
-		}
-
-		{
-			shared_ptr <ColoredMesh> right (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 0, 0.5f)));
-			right->Init ();
-			right->Pos = Vector2D (0.245f, 0.81f);
-			right->Scale = Vector2D (0.14f, 0.35f);
-			mButtons[Buttons::Right] = right;
-		}
-
-		{
-			shared_ptr <ColoredMesh> up (new ColoredMesh (1, 1, 32, Color (0, 0, 1.0f, 0.5f)));
-			up->Init ();
-			up->Pos = Vector2D (1.48f, 0.73f);
-			up->Scale = Vector2D (0.28f, 0.16f);
-			mButtons[Buttons::Up] = up;
-		}
-
-		{
-			shared_ptr <ColoredMesh> down (new ColoredMesh (1, 1, 32, Color (1.0f, 0, 0, 0.5f)));
-			down->Init ();
-			down->Pos = Vector2D (1.48f, 0.90f);
-			down->Scale = Vector2D (0.28f, 0.16f);
-			mButtons[Buttons::Down] = down;
-		}
-
-		{
-			shared_ptr <ColoredMesh> fire (new ColoredMesh (1, 1, 32, Color (1.0f, 1.0f, 0, 0.5f)));
-			fire->Init ();
-			fire->Pos = Vector2D (1.48f, 0.48f);
-			fire->Scale = Vector2D (0.25f, 0.25f);
-			mButtons[Buttons::Fire] = fire;
-		}
-
-		{
-			shared_ptr <ColoredMesh> c64Button (new ColoredMesh (1, 1, 32, Color (0, 1.0f, 1.0f, 0.5f)));
-			c64Button->Init ();
-			c64Button->Pos = Vector2D (0.09f, 0.355f);
-			c64Button->Scale = Vector2D (0.18f, 0.18f);
-			mButtons[Buttons::C64] = c64Button;
-		}
+		CreateButton (Buttons::Left,  Color (1.0f, 0, 0, 0.5f),    Vector2D (0.095f, 0.81f), Vector2D (0.14f, 0.35f), "left_press.png",  Vector2D (0.095f, 0.81f), Vector2D (0.14f, 0.35f));
+		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f),    Vector2D (0.245f, 0.81f), Vector2D (0.14f, 0.35f), "right_press.png", Vector2D (0.245f, 0.81f), Vector2D (0.14f, 0.35f));
+		CreateButton (Buttons::Up,    Color (0, 0, 1.0f, 0.5f),    Vector2D (1.48f, 0.73f),  Vector2D (0.28f, 0.16f), "up_press.png",    Vector2D (1.48f, 0.73f),  Vector2D (0.28f, 0.16f));
+		CreateButton (Buttons::Down,  Color (1.0f, 0, 0, 0.5f),    Vector2D (1.48f, 0.90f),  Vector2D (0.28f, 0.16f), "down_press.png",  Vector2D (1.48f, 0.90f),  Vector2D (0.28f, 0.16f));
+		CreateButton (Buttons::Fire,  Color (1.0f, 1.0f, 0, 0.5f), Vector2D (1.48f, 0.48f),  Vector2D (0.25f, 0.25f), "fire_press.png",  Vector2D (1.48f, 0.48f),  Vector2D (0.25f, 0.25f));
+		CreateButton (Buttons::C64,   Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 0.355f), Vector2D (0.18f, 0.18f), "c64_press.png",   Vector2D (0.09f, 0.355f), Vector2D (0.18f, 0.18f));
 	}
 }
 
