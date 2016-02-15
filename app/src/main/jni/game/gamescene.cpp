@@ -389,12 +389,18 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 	if (initButtons) {
 		DestroyButtons ();
 
-		CreateButton (Buttons::Left,  Color (1.0f, 0, 0, 0.5f),    Vector2D (0.1f , 1.4f),  Vector2D (0.14f, 0.4f), "left_press.png",  Vector2D (0.1f , 1.4f),  Vector2D (0.14f, 0.4f));
-		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f),    Vector2D (0.25f, 1.4f),  Vector2D (0.14f, 0.4f), "right_press.png", Vector2D (0.25f, 1.4f),  Vector2D (0.14f, 0.4f));
-		CreateButton (Buttons::Up,    Color (0, 0, 1.0f, 0.5f),    Vector2D (0.82f, 1.31f), Vector2D (0.28f, 0.18f), "up_press.png",   Vector2D (0.82f, 1.31f), Vector2D (0.28f, 0.18f));
-		CreateButton (Buttons::Down,  Color (1.0f, 0, 0, 0.5f),    Vector2D (0.82f, 1.51f), Vector2D (0.28f, 0.18f), "down_press.png", Vector2D (0.82f, 1.51f), Vector2D (0.28f, 0.18f));
-		CreateButton (Buttons::Fire,  Color (1.0f, 1.0f, 0, 0.5f), Vector2D (0.495f, 1.4f), Vector2D (0.32f, 0.4f), "fire_press.png",  Vector2D (0.495f, 1.4f), Vector2D (0.32f, 0.4f));
-		CreateButton (Buttons::C64,   Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 1.01f), Vector2D (0.18f, 0.18f), "c64_press.png", Vector2D (0.09f, 1.01f), Vector2D (0.18f, 0.18f));
+		CreateButton (Buttons::Left, Color (1.0f, 0, 0, 0.5f), Vector2D (0.1f, 1.4f), Vector2D (0.14f, 0.4f),
+					  "left_press.png", game.RefToLocal (75, 1985) + game.RefToLocal (75, 93) / 2.0f, game.RefToLocal (75, 93));
+		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f), Vector2D (0.25f, 1.4f), Vector2D (0.14f, 0.4f),
+					  "right_press.png", game.RefToLocal (363, 1985) + game.RefToLocal (74, 95) / 2.0f, game.RefToLocal (74, 95));
+		CreateButton (Buttons::Up, Color (0, 0, 1.0f, 0.5f), Vector2D (0.82f, 1.31f), Vector2D (0.28f, 0.18f),
+					  "up_press.png", game.RefToLocal (1128, 1847) + game.RefToLocal (96, 75) / 2.0f, game.RefToLocal (96, 75));
+		CreateButton (Buttons::Down, Color (1.0f, 0, 0, 0.5f), Vector2D (0.82f, 1.51f), Vector2D (0.28f, 0.18f),
+					  "down_press.png", game.RefToLocal (1129, 2133) + game.RefToLocal (93, 73) / 2.0f, game.RefToLocal (93, 73));
+		CreateButton (Buttons::Fire, Color (1.0f, 1.0f, 0, 0.5f), Vector2D (0.495f, 1.4f), Vector2D (0.32f, 0.4f),
+					  "fire_press.png", game.RefToLocal (579, 1896) + game.RefToLocal (262, 272) / 2.0f, game.RefToLocal (262, 272));
+		CreateButton (Buttons::C64, Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 1.01f), Vector2D (0.18f, 0.18f),
+					  "c64_press.png", game.RefToLocal (37, 1370) + game.RefToLocal (184, 183) / 2.0f, game.RefToLocal (184, 183));
 	}
 }
 
@@ -422,12 +428,18 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 	if (initButtons) {
 		DestroyButtons ();
 
-		CreateButton (Buttons::Left,  Color (1.0f, 0, 0, 0.5f),    Vector2D (0.095f, 0.81f), Vector2D (0.14f, 0.35f), "left_press.png",  Vector2D (0.095f, 0.81f), Vector2D (0.14f, 0.35f));
-		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f),    Vector2D (0.245f, 0.81f), Vector2D (0.14f, 0.35f), "right_press.png", Vector2D (0.245f, 0.81f), Vector2D (0.14f, 0.35f));
-		CreateButton (Buttons::Up,    Color (0, 0, 1.0f, 0.5f),    Vector2D (1.48f, 0.73f),  Vector2D (0.28f, 0.16f), "up_press.png",    Vector2D (1.48f, 0.73f),  Vector2D (0.28f, 0.16f));
-		CreateButton (Buttons::Down,  Color (1.0f, 0, 0, 0.5f),    Vector2D (1.48f, 0.90f),  Vector2D (0.28f, 0.16f), "down_press.png",  Vector2D (1.48f, 0.90f),  Vector2D (0.28f, 0.16f));
-		CreateButton (Buttons::Fire,  Color (1.0f, 1.0f, 0, 0.5f), Vector2D (1.48f, 0.48f),  Vector2D (0.25f, 0.25f), "fire_press.png",  Vector2D (1.48f, 0.48f),  Vector2D (0.25f, 0.25f));
-		CreateButton (Buttons::C64,   Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 0.355f), Vector2D (0.18f, 0.18f), "c64_press.png",   Vector2D (0.09f, 0.355f), Vector2D (0.18f, 0.18f));
+		CreateButton (Buttons::Left, Color (1.0f, 0, 0, 0.5f), Vector2D (0.095f, 0.81f), Vector2D (0.14f, 0.35f),
+					  "left_press.png", game.RefToLocal (71, 1130) + game.RefToLocal (75, 93) / 2.0f, game.RefToLocal (75, 93));
+		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f), Vector2D (0.245f, 0.81f), Vector2D (0.14f, 0.35f),
+					  "right_press.png", game.RefToLocal (359, 1130) + game.RefToLocal (74, 95) / 2.0f, game.RefToLocal (74, 95));
+		CreateButton (Buttons::Up, Color (0, 0, 1.0f, 0.5f), Vector2D (1.48f, 0.73f), Vector2D (0.28f, 0.16f),
+					  "up_press.png", game.RefToLocal (2083, 993) + game.RefToLocal (96, 75) / 2.0f, game.RefToLocal (96, 75));
+		CreateButton (Buttons::Down, Color (1.0f, 0, 0, 0.5f), Vector2D (1.48f, 0.90f), Vector2D (0.28f, 0.16f),
+					  "down_press.png", game.RefToLocal (2084, 1279) + game.RefToLocal (93, 73) / 2.0f, game.RefToLocal (93, 73));
+		CreateButton (Buttons::Fire, Color (1.0f, 1.0f, 0, 0.5f), Vector2D (1.48f, 0.48f), Vector2D (0.25f, 0.25f),
+					  "fire_press.png", game.RefToLocal (1996, 574) + game.RefToLocal (262, 272) / 2.0f, game.RefToLocal (262, 272));
+		CreateButton (Buttons::C64, Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 0.355f), Vector2D (0.18f, 0.18f),
+					  "c64_press.png", game.RefToLocal (33, 428) + game.RefToLocal (184, 183) / 2.0f, game.RefToLocal (184, 183));
 	}
 }
 
