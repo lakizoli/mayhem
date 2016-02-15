@@ -51,12 +51,13 @@ private:
 
 	//Graphic data
 	shared_ptr<ImageMesh> mBackground;
-	map<Buttons, shared_ptr<ImageMesh>> mButtonPresses;
 
-	//Direction data
+	//Button data
 	map<Buttons, shared_ptr<ColoredMesh>> mButtons;
 	uint32_t mButtonStates;
 	map<int, Buttons> mButtonFingerIDs;
+
+	map<Buttons, shared_ptr<ImageMesh>> mButtonPresses;
 
 //Construction
 public:
@@ -66,6 +67,9 @@ public:
 public:
 	virtual void Init (float width, float height) override;
 	virtual void Shutdown () override;
+
+	virtual void Pause () override;
+	virtual void Continue () override;
 
 	virtual void Resize (float oldWidth, float oldHeight, float newWidth, float newHeight) override;
 

@@ -59,6 +59,9 @@ public:
 	virtual void Init (int screenWidth, int screenHeight, int refWidth, int refHeight);
 	virtual void Shutdown ();
 
+	virtual void Pause ();
+	virtual void Continue ();
+
 	virtual void Resize (int newScreenWidth, int newScreenHeight);
 
 	/// <summary>

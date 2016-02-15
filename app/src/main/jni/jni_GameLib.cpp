@@ -10,6 +10,10 @@
 //c64emu declarations
 extern "C" int main_program (int argc, char **argv);
 
+extern "C" void ui_pause_emulation(void);
+extern "C" void ui_continue_emulation(void);
+extern "C" int ui_emulation_is_paused(void);
+
 //Video callbacks
 typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint32_t visible_width, uint32_t visible_height, uint8_t** buffer, uint32_t* pitch);
 extern "C" void video_android_set_init_callback (t_fn_init_canvas init_canvas);
@@ -139,10 +143,29 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 		elapsedTime = currentTime - g_engine.lastUpdateTime;
 	g_engine.lastUpdateTime = currentTime;
 
+	if (ui_emulation_is_paused ()) //Handle pause
+		return;
+
 	g_engine.game->Update ((float)elapsedTime);
 
 	//Render the game
 	g_engine.game->Render ();
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_pause (JNIEnv* env, jclass type) {
+	g_engine.game->Pause ();
+	ui_pause_emulation ();
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, jclass type) {
+	g_engine.lastUpdateTime = -1;
+
+	ui_continue_emulation ();
+	g_engine.game->Continue ();
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isPaused (JNIEnv* env, jclass type) {
+	return ui_emulation_is_paused () ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resize (JNIEnv* env, jclass clazz, jint newScreenWidth, jint newScreenHeight) {

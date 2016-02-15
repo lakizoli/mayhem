@@ -15,6 +15,10 @@ public class GameLib {
 	public static native void init (int screenWidth, int screenHeight, int refWidth, int refHeight);
 	public static native boolean isInited ();
 
+	public static native void pause ();
+	public static native void resume ();
+	public static native boolean isPaused ();
+
 	public static native void step ();
 	public static native void resize (int newScreenWidth, int newScreenHeight);
 

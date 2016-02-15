@@ -289,6 +289,8 @@ class GLView extends GLSurfaceView {
 
 		public void onSurfaceChanged (GL10 gl, int width, int height) {
 			if (GameLib.isInited ()) {
+				if (GameLib.isPaused ())
+					GameLib.resume ();
 				GameLib.resize (width, height);
 			} else { //First call
 				int refWidth = width > height ? 2392 : 1440;
@@ -304,6 +306,17 @@ class GLView extends GLSurfaceView {
 			// Do nothing.
 		}
 	}
+
+	//region Pause / Continue handlers
+	@Override
+	public void onPause () {
+		if (GameLib.isInited ()) {
+			GameLib.pause ();
+		}
+
+		super.onPause ();
+	}
+	//endregion
 
 	//region touch handlers
 	@Override

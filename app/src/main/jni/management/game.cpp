@@ -26,6 +26,16 @@ void Game::Shutdown () {
 	SetCurrentScene (nullptr);
 }
 
+void Game::Pause () {
+	if (mCurrentScene)
+		mCurrentScene->Pause ();
+}
+
+void Game::Continue () {
+	if (mCurrentScene)
+		mCurrentScene->Continue ();
+}
+
 void Game::Resize (int newScreenWidth, int newScreenHeight) {
 	float oldWidth = mWidth;
 	float oldHeight = mHeight;

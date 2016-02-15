@@ -10,8 +10,16 @@ extern engine_s g_engine;
 extern "C" void keyboard_key_pressed (signed long key);
 extern "C" void keyboard_key_released (signed long key);
 
+//TODO: -> a pause javitasa
+
+//TODO: device size change javitasa (check tablet)
+//TODO: az aktualis allapot mentesenek implementalasa (berakas a pause-be is, mert kiszallas elott pause jon!)
+//TODO: 10 sec fire press -> reset game implementalasa
+//TODO: reklam elhelyezese a jatekban
+
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
+	mBackground.reset ();
 
 	mScreenCounter = 0;
 	mDrawCounter = 0;
@@ -33,9 +41,26 @@ void GameScene::Init (float width, float height) {
 void GameScene::Shutdown () {
 	DestroyButtons ();
 
+	if (mBackground) {
+		mBackground->Shutdown ();
+		mBackground.reset ();
+	}
+
 	if (mC64Screen)
 		mC64Screen->Shutdown ();
 	mC64Screen.reset ();
+}
+
+void GameScene::Pause () {
+	Shutdown ();
+}
+
+void GameScene::Continue () {
+	Game& game = Game::Get ();
+	if (game.Width () <= game.Height ())
+		InitVerticalLayout (true);
+	else
+		InitHorizontalLayout (true);
 }
 
 void GameScene::Resize (float oldWidth, float oldHeight, float newWidth, float newHeight) {

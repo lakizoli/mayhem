@@ -13,6 +13,12 @@ public:
 	/// Shutdown once after draw.
 	virtual void Shutdown () = 0;
 
+	/// Pause the scene
+	virtual void Pause () = 0;
+
+	/// Continue the scene
+	virtual void Continue () = 0;
+
 	/// Resize scene.
 	virtual void Resize (float oldWidth, float oldHeight, float newWidth, float newHeight) = 0;
 
