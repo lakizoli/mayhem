@@ -239,6 +239,21 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 	Scene::TouchMove (fingerID, pos);
 
 	if (mState == GameStates::Game) {
+		//Handle key move out (release touch under finger)
+		{
+			auto it = mButtonFingerIDs.find (fingerID);
+			if (it != mButtonFingerIDs.end ()) {
+				auto itButton = mButtons.find (it->second);
+				if (itButton != mButtons.end () && !itButton->second->TransformedBoundingBox ().Contains (pos)) { //Touch up of button, when finger moved out from region
+					HandleKey (it->second, false);
+
+					mButtonStates &= !((uint32_t) it->second);
+					mButtonFingerIDs.erase (fingerID);
+				}
+			}
+		}
+
+		//Handle key move in
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
 			if (it->second && it->second->TransformedBoundingBox ().Contains (pos)) { //Handle finger moves
 				//Handle key release by move
