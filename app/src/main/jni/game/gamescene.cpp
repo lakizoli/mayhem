@@ -79,9 +79,6 @@ void GameScene::Update (float elapsedTime) {
 		mC64Screen.reset (new TexAnimMesh (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel));
 		mC64Screen->Init ();
 
-		float c64aspect = (float)g_engine.visible_height / (float)g_engine.visible_width;
-		mC64Screen->Scale = Vector2D (0.95f, 0.95f * c64aspect);
-
 		if (game.Width () <= game.Height ())
 			InitVerticalLayout (false);
 		else
@@ -213,10 +210,10 @@ void GameScene::Render () {
 	if (mC64Screen)
 		mC64Screen->Render ();
 
-	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
-		if (it->second)
-			it->second->Render ();
-	}
+//	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
+//		if (it->second)
+//			it->second->Render ();
+//	}
 
 	if (mButtonStates & (uint32_t)Buttons::Left)
 		mButtonPresses[Buttons::Left]->Render ();
@@ -431,32 +428,38 @@ void GameScene::DestroyButtons () {
 void GameScene::CreateButton (bool isVerticalLayout, Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale,
 							  const string& pressAsset, const Vector2D& posPress, const Vector2D& scalePress) {
 	Game& game = Game::Get ();
+	Vector2D screenRefScale = game.ScreenRefScale () * game.AspectScaleFactor ();
+	Vector2D screenRefPos = game.ScreenRefPos ();
 
 	shared_ptr <ColoredMesh> left (new ColoredMesh (1, 1, 32, color));
 	left->Init ();
-
-	Vector2D posRef = pos;
-	if (isVerticalLayout) { //Vertcal position correction :)
-		float refAspect = (float)game.RefHeight () / (float)game.RefWidth ();
-		posRef.y = posRef.y / refAspect;
-	} else { //Horizontal position correction :)
-		float refAspect = (float)game.RefWidth () / (float)game.RefHeight ();
-		posRef.x = posRef.x / refAspect;
-	}
-
-	left->Pos = game.RefToLocal (posRef * game.RefSize ());
-	left->Scale = scale;
+	left->Pos = screenRefPos + ConvertRefPercentCoordToLocal (isVerticalLayout, pos) * screenRefScale;
+	left->Scale = ConvertRefPercentCoordToLocal (isVerticalLayout, scale) * screenRefScale;
 	mButtons[button] = left;
 
 	shared_ptr <ImageMesh> leftPress (new ImageMesh (pressAsset));
 	leftPress->Init ();
-	leftPress->Pos = posPress;
-	leftPress->Scale = scalePress;
+	leftPress->Pos = screenRefPos + posPress * screenRefScale;
+	leftPress->Scale = scalePress * screenRefScale;
 	mButtonPresses[button] = leftPress;
+}
+
+Vector2D GameScene::ConvertRefPercentCoordToLocal (bool isVerticalLayout, Vector2D percentCoord) const {
+	Game& game = Game::Get ();
+	if (isVerticalLayout) { //Vertcal position correction :)
+		float refAspect = (float)game.RefHeight () / (float)game.RefWidth ();
+		percentCoord.y /= refAspect;
+	} else { //Horizontal position correction :)
+		float refAspect = (float)game.RefWidth () / (float)game.RefHeight ();
+		percentCoord.x /= refAspect;
+	}
+	return game.RefToLocal (percentCoord * game.RefSize ());
 }
 
 void GameScene::InitVerticalLayout (bool initButtons) {
 	Game& game = Game::Get ();
+	Vector2D screenRefScale = game.ScreenRefScale () * game.AspectScaleFactor ();
+	Vector2D screenRefPos = game.ScreenRefPos ();
 
 	//Graphics
 	if (mBackground) {
@@ -466,12 +469,15 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 
 	mBackground.reset (new ImageMesh ("main_background_vertical.png"));
 	mBackground->Init ();
-	mBackground->Pos = game.Size () / 2.0f;
-	mBackground->Scale = game.Size ();
+	mBackground->Pos = screenRefPos + game.Size () / 2.0f * screenRefScale;
+	mBackground->Scale = game.Size () * screenRefScale;
 
-	//place C64 screen to the right position
+	//place C64 screen to the right position (corrected coordinates :)
 	if (mC64Screen) {
-		mC64Screen->Pos = game.RefToLocal (Vector2D (0.5f, 0.319f) * game.RefSize ());
+		mC64Screen->Pos = screenRefPos + game.RefToLocal (Vector2D (0.5f, 0.319f) * game.RefSize ()) * screenRefScale;
+
+		float c64aspect = (float)g_engine.visible_height / (float)g_engine.visible_width;
+		mC64Screen->Scale = ConvertRefPercentCoordToLocal (true, Vector2D (0.95f, 0.95f * c64aspect)) * screenRefScale;
 	}
 
 	//Init buttons
@@ -495,6 +501,8 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 
 void GameScene::InitHorizontalLayout (bool initButtons) {
 	Game& game = Game::Get ();
+	Vector2D screenRefScale = game.ScreenRefScale () * game.AspectScaleFactor ();
+	Vector2D screenRefPos = game.ScreenRefPos ();
 
 	//Graphics
 	if (mBackground) {
@@ -504,13 +512,16 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 
 	mBackground.reset (new ImageMesh ("main_background_horizontal.png"));
 	mBackground->Init ();
-	mBackground->Pos = game.Size () / 2.0f;
-	mBackground->Scale = game.Size ();
+	mBackground->Pos = screenRefPos + game.Size () / 2.0f * screenRefScale;
+	mBackground->Scale = game.Size () * screenRefScale;
 
 
-	//place C64 screen to the right position
+	//place C64 screen to the right position (corrected coordinates :)
 	if (mC64Screen) {
-		mC64Screen->Pos = game.RefToLocal (Vector2D (0.5f, 0.517f) * game.RefSize ());
+		mC64Screen->Pos = screenRefPos + game.RefToLocal (Vector2D (0.5f, 0.517f) * game.RefSize ()) * screenRefScale;
+
+		float c64aspect = (float)g_engine.visible_height / (float)g_engine.visible_width;
+		mC64Screen->Scale = ConvertRefPercentCoordToLocal (false, Vector2D (0.95f, 0.95f * c64aspect)) * screenRefScale;
 	}
 
 	//Init buttons

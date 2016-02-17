@@ -131,6 +131,20 @@ public:
 		return RefToLocal (ref.x, ref.y);
 	}
 
+	Vector2D ScreenRefPos () const {
+		return (Vector2D (1, 1) - ScreenRefScale () * AspectScaleFactor ()) / 2.0f;
+	}
+
+	Vector2D ScreenRefScale () const {
+		return RefSize () / ScreenSize ();
+	}
+
+	float AspectScaleFactor () const {
+		Vector2D&& screenRefScale = ScreenRefScale ();
+		float scaleFactor = max (screenRefScale.x, screenRefScale.y);
+		return 1.0f / scaleFactor;
+	}
+
 //Inner methods
 private:
 	void InitProjection (int screenWidth, int screenHeight);
