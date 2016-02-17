@@ -5,6 +5,7 @@
 #include "../content/texanimmesh.h"
 #include "../content/coloredmesh.h"
 #include "../content/imagemesh.h"
+#include "../jnihelper/jniload.h"
 
 extern engine_s g_engine;
 extern "C" void keyboard_key_pressed (signed long key);
@@ -234,12 +235,25 @@ void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
 	Scene::TouchDown (fingerID, pos);
 
 	if (mState == GameStates::Game) {
+//		stringstream ss;
+//		ss << "GameScene::TouchDown () - fingerID: " << fingerID << ", pos: " << pos;
+//		LOGD ("%s", ss.str ().c_str ());
+
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
 			if (it->second && (mButtonStates & (uint32_t) it->first) != (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If button not pressed
+//				stringstream ss2;
+//				ss2 << "GameScene::TouchDown () - button pressed! id: " << (uint32_t) it->first;
+//				LOGD ("%s", ss2.str ().c_str ());
+
 				mButtonStates |= (uint32_t) it->first;
 				mButtonFingerIDs[fingerID] = it->first;
 
 				HandleKey (it->first, true);
+
+//				stringstream ss3;
+//				ss3 << "GameScene::TouchDown () - button state: " << mButtonStates;
+//				LOGD ("%s", ss3.str ().c_str ());
+				break;
 			}
 		}
 	}
@@ -249,12 +263,25 @@ void GameScene::TouchUp (int fingerID, const Vector2D& pos) {
 	Scene::TouchUp (fingerID, pos);
 
 	if (mState == GameStates::Game) {
+//		stringstream ss;
+//		ss << "GameScene::TouchUp () - fingerID: " << fingerID << ", pos: " << pos;
+//		LOGD ("%s", ss.str ().c_str ());
+
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
 			if (it->second && (mButtonStates & (uint32_t) it->first) == (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If already in pressed state
+//				stringstream ss2;
+//				ss2 << "GameScene::TouchUp () - button released! id: " << (uint32_t) it->first;
+//				LOGD ("%s", ss2.str ().c_str ());
+
 				HandleKey (it->first, false);
 
 				mButtonStates &= !((uint32_t) it->first);
 				mButtonFingerIDs.erase (fingerID);
+
+//				stringstream ss3;
+//				ss3 << "GameScene::TouchUp () - button state: " << mButtonStates;
+//				LOGD ("%s", ss3.str ().c_str ());
+				break;
 			}
 		}
 	}
@@ -264,39 +291,48 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 	Scene::TouchMove (fingerID, pos);
 
 	if (mState == GameStates::Game) {
+//		stringstream ss;
+//		ss << "GameScene::TouchMove () - fingerID: " << fingerID << ", pos: " << pos;
+//		LOGD ("%s", ss.str ().c_str ());
+
 		//Handle key move out (release touch under finger)
 		{
 			auto it = mButtonFingerIDs.find (fingerID);
 			if (it != mButtonFingerIDs.end ()) {
 				auto itButton = mButtons.find (it->second);
 				if (itButton != mButtons.end () && !itButton->second->TransformedBoundingBox ().Contains (pos)) { //Touch up of button, when finger moved out from region
+//					stringstream ss2;
+//					ss2 << "GameScene::TouchMove () - button released! id: " << (uint32_t) it->second;
+//					LOGD ("%s", ss2.str ().c_str ());
+
 					HandleKey (it->second, false);
 
 					mButtonStates &= !((uint32_t) it->second);
 					mButtonFingerIDs.erase (fingerID);
+
+//					stringstream ss3;
+//					ss3 << "GameScene::TouchMove () - button state after release: " << mButtonStates;
+//					LOGD ("%s", ss3.str ().c_str ());
 				}
 			}
 		}
 
-		//Handle key move in
+		//Handle key move in (touch button under finger)
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
-			if (it->second && it->second->TransformedBoundingBox ().Contains (pos)) { //Handle finger moves
-				//Handle key release by move
-				auto itFinger = mButtonFingerIDs.find (fingerID);
-				if (itFinger != mButtonFingerIDs.end () && itFinger->second != it->first) { //Touch up of button, when finger moved to another button
-					HandleKey (itFinger->second, false);
+			if (it->second && (mButtonStates & (uint32_t) it->first) != (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //Handle key press by move
+//				stringstream ss2;
+//				ss2 << "GameScene::TouchMove () - button pressed! id: " << (uint32_t) it->first;
+//				LOGD ("%s", ss2.str ().c_str ());
 
-					mButtonStates &= !((uint32_t) itFinger->second);
-					mButtonFingerIDs.erase (fingerID);
-				}
+				mButtonStates |= (uint32_t) it->first;
+				mButtonFingerIDs[fingerID] = it->first;
 
-				//Handle key press by move
-				if ((mButtonStates & (uint32_t) it->first) != (uint32_t) it->first) {
-					mButtonStates |= (uint32_t) it->first;
-					mButtonFingerIDs[fingerID] = it->first;
+				HandleKey (it->first, true);
 
-					HandleKey (it->first, true);
-				}
+//				stringstream ss3;
+//				ss3 << "GameScene::TouchMove () - button state after press: " << mButtonStates;
+//				LOGD ("%s", ss3.str ().c_str ());
+				break;
 			}
 		}
 	}

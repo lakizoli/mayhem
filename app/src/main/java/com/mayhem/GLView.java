@@ -323,18 +323,18 @@ class GLView extends GLSurfaceView {
 	public boolean onTouchEvent (MotionEvent event) {
 		int action = event.getAction ();
 		int pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-		//LOGD ("OnTouchEvent (Raw) -> action: %d, idx: %d, id: %d, x: %.2f, y: %.2f", action, pointerIndex, AMotionEvent_getPointerId (event, pointerIndex), AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+//		Log.d ("Mayhem", String.format ("OnTouchEvent (Raw) -> action: %d, idx: %d, id: %d, x: %.2f, y: %.2f", action, pointerIndex, event.getPointerId (pointerIndex), event.getX (pointerIndex), event.getY (pointerIndex)));
 		if (action == MotionEvent.ACTION_DOWN || (action & MotionEvent.ACTION_POINTER_DOWN) == MotionEvent.ACTION_POINTER_DOWN) {
 			int id = event.getPointerId (pointerIndex);
 			if (!GameLib.hasPointerID (id)) {
-				//LOGD ("OnTouchEvent (Down) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+//				Log.d ("Mayhem", String.format ("OnTouchEvent (Down) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, event.getX (pointerIndex), event.getY (pointerIndex)));
 				GameLib.insertPointerID (id);
 				GameLib.touchDown (id, event.getX (pointerIndex), event.getY (pointerIndex));
 			}
 		} else if (action == MotionEvent.ACTION_UP || (action & MotionEvent.ACTION_POINTER_UP) == MotionEvent.ACTION_POINTER_UP) {
 			int id = event.getPointerId (pointerIndex);
 			if (GameLib.hasPointerID (id)) {
-				//LOGD ("OnTouchEvent (Up) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+//				Log.d ("Mayhem", String.format ("OnTouchEvent (Up) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, event.getX (pointerIndex), event.getY (pointerIndex)));
 				GameLib.erasePointerID (id);
 				GameLib.touchUp (id, event.getX (pointerIndex), event.getY (pointerIndex));
 			}
@@ -342,7 +342,7 @@ class GLView extends GLSurfaceView {
 			for (int i = 0, iEnd = event.getPointerCount (); i < iEnd; ++i) {
 				int id = event.getPointerId (i);
 				if (GameLib.hasPointerID (id)) {
-					//LOGD ("OnTouchEvent (Move) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, AMotionEvent_getX (event, pointerIndex), AMotionEvent_getY (event, pointerIndex));
+//					Log.d ("Mayhem", String.format ("OnTouchEvent (Move) -> idx: %d, id: %d, x: %.2f, y: %.2f", pointerIndex, id, event.getX (pointerIndex), event.getY (pointerIndex)));
 					GameLib.touchMove (id, event.getX (i), event.getY (i));
 				}
 			}
