@@ -74,13 +74,14 @@ void GameScene::Resize (float oldWidth, float oldHeight, float newWidth, float n
 void GameScene::Update (float elapsedTime) {
 	//Create C64 screen texture
 	if (!mC64Screen && g_engine.canvas_inited) {
+		Game& game = Game::Get ();
+
 		mC64Screen.reset (new TexAnimMesh (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel));
 		mC64Screen->Init ();
 
 		float c64aspect = (float)g_engine.visible_height / (float)g_engine.visible_width;
 		mC64Screen->Scale = Vector2D (0.95f, 0.95f * c64aspect);
 
-		Game& game = Game::Get ();
 		if (game.Width () <= game.Height ())
 			InitVerticalLayout (false);
 		else
@@ -212,10 +213,10 @@ void GameScene::Render () {
 	if (mC64Screen)
 		mC64Screen->Render ();
 
-//	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
-//		if (it->second)
-//			it->second->Render ();
-//	}
+	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
+		if (it->second)
+			it->second->Render ();
+	}
 
 	if (mButtonStates & (uint32_t)Buttons::Left)
 		mButtonPresses[Buttons::Left]->Render ();
@@ -427,11 +428,23 @@ void GameScene::DestroyButtons () {
 	mButtonFingerIDs.clear ();
 }
 
-void GameScene::CreateButton (Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale,
+void GameScene::CreateButton (bool isVerticalLayout, Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale,
 							  const string& pressAsset, const Vector2D& posPress, const Vector2D& scalePress) {
+	Game& game = Game::Get ();
+
 	shared_ptr <ColoredMesh> left (new ColoredMesh (1, 1, 32, color));
 	left->Init ();
-	left->Pos = pos;
+
+	Vector2D posRef = pos;
+	if (isVerticalLayout) { //Vertcal position correction :)
+		float refAspect = (float)game.RefHeight () / (float)game.RefWidth ();
+		posRef.y = posRef.y / refAspect;
+	} else { //Horizontal position correction :)
+		float refAspect = (float)game.RefWidth () / (float)game.RefHeight ();
+		posRef.x = posRef.x / refAspect;
+	}
+
+	left->Pos = game.RefToLocal (posRef * game.RefSize ());
 	left->Scale = scale;
 	mButtons[button] = left;
 
@@ -454,28 +467,28 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 	mBackground.reset (new ImageMesh ("main_background_vertical.png"));
 	mBackground->Init ();
 	mBackground->Pos = game.Size () / 2.0f;
-	mBackground->Scale = game.Size () * game.ScreenSize () / game.RefSize ();
+	mBackground->Scale = game.Size ();
 
 	//place C64 screen to the right position
 	if (mC64Screen) {
-		mC64Screen->Pos = Vector2D (0.5f, 0.53f);
+		mC64Screen->Pos = game.RefToLocal (Vector2D (0.5f, 0.319f) * game.RefSize ());
 	}
 
 	//Init buttons
 	if (initButtons) {
 		DestroyButtons ();
 
-		CreateButton (Buttons::Left, Color (1.0f, 0, 0, 0.5f), Vector2D (0.1f, 1.4f), Vector2D (0.14f, 0.4f),
+		CreateButton (true, Buttons::Left, Color (1.0f, 0, 0, 0.5f), Vector2D (0.1f, 1.4f), Vector2D (0.14f, 0.4f),
 					  "left_press.png", game.RefToLocal (75, 1985) + game.RefToLocal (75, 93) / 2.0f, game.RefToLocal (75, 93));
-		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f), Vector2D (0.25f, 1.4f), Vector2D (0.14f, 0.4f),
+		CreateButton (true, Buttons::Right, Color (0, 1.0f, 0, 0.5f), Vector2D (0.25f, 1.4f), Vector2D (0.14f, 0.4f),
 					  "right_press.png", game.RefToLocal (363, 1985) + game.RefToLocal (74, 95) / 2.0f, game.RefToLocal (74, 95));
-		CreateButton (Buttons::Up, Color (0, 0, 1.0f, 0.5f), Vector2D (0.82f, 1.31f), Vector2D (0.28f, 0.18f),
+		CreateButton (true, Buttons::Up, Color (0, 0, 1.0f, 0.5f), Vector2D (0.82f, 1.31f), Vector2D (0.28f, 0.18f),
 					  "up_press.png", game.RefToLocal (1128, 1847) + game.RefToLocal (96, 75) / 2.0f, game.RefToLocal (96, 75));
-		CreateButton (Buttons::Down, Color (1.0f, 0, 0, 0.5f), Vector2D (0.82f, 1.51f), Vector2D (0.28f, 0.18f),
+		CreateButton (true, Buttons::Down, Color (1.0f, 0, 0, 0.5f), Vector2D (0.82f, 1.51f), Vector2D (0.28f, 0.18f),
 					  "down_press.png", game.RefToLocal (1129, 2133) + game.RefToLocal (93, 73) / 2.0f, game.RefToLocal (93, 73));
-		CreateButton (Buttons::Fire, Color (1.0f, 1.0f, 0, 0.5f), Vector2D (0.495f, 1.4f), Vector2D (0.32f, 0.4f),
+		CreateButton (true, Buttons::Fire, Color (1.0f, 1.0f, 0, 0.5f), Vector2D (0.495f, 1.4f), Vector2D (0.32f, 0.4f),
 					  "fire_press.png", game.RefToLocal (579, 1896) + game.RefToLocal (262, 272) / 2.0f, game.RefToLocal (262, 272));
-		CreateButton (Buttons::C64, Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 1.01f), Vector2D (0.18f, 0.18f),
+		CreateButton (true, Buttons::C64, Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 1.01f), Vector2D (0.18f, 0.18f),
 					  "c64_press.png", game.RefToLocal (37, 1370) + game.RefToLocal (184, 183) / 2.0f, game.RefToLocal (184, 183));
 	}
 }
@@ -492,29 +505,29 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 	mBackground.reset (new ImageMesh ("main_background_horizontal.png"));
 	mBackground->Init ();
 	mBackground->Pos = game.Size () / 2.0f;
-	mBackground->Scale = game.Size () * game.ScreenSize () / game.RefSize ();
+	mBackground->Scale = game.Size ();
 
 
 	//place C64 screen to the right position
 	if (mC64Screen) {
-		mC64Screen->Pos = Vector2D (0.5f * game.Width (), 0.517f);
+		mC64Screen->Pos = game.RefToLocal (Vector2D (0.5f, 0.517f) * game.RefSize ());
 	}
 
 	//Init buttons
 	if (initButtons) {
 		DestroyButtons ();
 
-		CreateButton (Buttons::Left, Color (1.0f, 0, 0, 0.5f), Vector2D (0.095f, 0.81f), Vector2D (0.14f, 0.35f),
+		CreateButton (false, Buttons::Left, Color (1.0f, 0, 0, 0.5f), Vector2D (0.095f, 0.81f), Vector2D (0.14f, 0.35f),
 					  "left_press.png", game.RefToLocal (71, 1130) + game.RefToLocal (75, 93) / 2.0f, game.RefToLocal (75, 93));
-		CreateButton (Buttons::Right, Color (0, 1.0f, 0, 0.5f), Vector2D (0.245f, 0.81f), Vector2D (0.14f, 0.35f),
+		CreateButton (false, Buttons::Right, Color (0, 1.0f, 0, 0.5f), Vector2D (0.245f, 0.81f), Vector2D (0.14f, 0.35f),
 					  "right_press.png", game.RefToLocal (359, 1130) + game.RefToLocal (74, 95) / 2.0f, game.RefToLocal (74, 95));
-		CreateButton (Buttons::Up, Color (0, 0, 1.0f, 0.5f), Vector2D (1.48f, 0.73f), Vector2D (0.28f, 0.16f),
+		CreateButton (false, Buttons::Up, Color (0, 0, 1.0f, 0.5f), Vector2D (1.48f, 0.73f), Vector2D (0.28f, 0.16f),
 					  "up_press.png", game.RefToLocal (2083, 993) + game.RefToLocal (96, 75) / 2.0f, game.RefToLocal (96, 75));
-		CreateButton (Buttons::Down, Color (1.0f, 0, 0, 0.5f), Vector2D (1.48f, 0.90f), Vector2D (0.28f, 0.16f),
+		CreateButton (false, Buttons::Down, Color (1.0f, 0, 0, 0.5f), Vector2D (1.48f, 0.90f), Vector2D (0.28f, 0.16f),
 					  "down_press.png", game.RefToLocal (2084, 1279) + game.RefToLocal (93, 73) / 2.0f, game.RefToLocal (93, 73));
-		CreateButton (Buttons::Fire, Color (1.0f, 1.0f, 0, 0.5f), Vector2D (1.48f, 0.48f), Vector2D (0.25f, 0.25f),
+		CreateButton (false, Buttons::Fire, Color (1.0f, 1.0f, 0, 0.5f), Vector2D (1.48f, 0.48f), Vector2D (0.25f, 0.25f),
 					  "fire_press.png", game.RefToLocal (1996, 574) + game.RefToLocal (262, 272) / 2.0f, game.RefToLocal (262, 272));
-		CreateButton (Buttons::C64, Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 0.355f), Vector2D (0.18f, 0.18f),
+		CreateButton (false, Buttons::C64, Color (0, 1.0f, 1.0f, 0.5f), Vector2D (0.09f, 0.355f), Vector2D (0.18f, 0.18f),
 					  "c64_press.png", game.RefToLocal (33, 428) + game.RefToLocal (184, 183) / 2.0f, game.RefToLocal (184, 183));
 	}
 }

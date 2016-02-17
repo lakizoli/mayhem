@@ -184,16 +184,16 @@ public:
 	}
 };
 
-inline static Vector2D operator *(float multiplier, const Vector2D& vec) {
-	return Vector2D (vec.x * multiplier, vec.y * multiplier);
+inline static Vector2D operator *(float value, const Vector2D& multiplier) {
+	return Vector2D (value * multiplier.x, value * multiplier.y);
 }
 
-inline static Vector2D operator /(float divider, const Vector2D& vec) {
-	return Vector2D (divider / vec.x, divider / vec.y);
+inline static Vector2D operator /(float value, const Vector2D& divider) {
+	return Vector2D (value / divider.x, value / divider.y);
 }
 
-inline static Vector2D operator %(float divider, const Vector2D& vec) {
-	return Vector2D (fmodf (divider, vec.x), fmodf (divider, vec.y));
+inline static Vector2D operator %(float value, const Vector2D& divider) {
+	return Vector2D (fmodf (value, divider.x), fmodf (value, divider.y));
 }
 
 inline static ostream& operator << (ostream& stream, const Vector2D& vec) {
@@ -201,4 +201,4 @@ inline static ostream& operator << (ostream& stream, const Vector2D& vec) {
 	return stream;
 }
 
-//TODO: istream JSON beolvasás kezelése a Vector2D-nél
+//TODO: istream JSON beolvasï¿½s kezelï¿½se a Vector2D-nï¿½l

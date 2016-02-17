@@ -103,16 +103,32 @@ public:
 		return Vector2D (localX * mScreenWidth / mWidth, localY * mScreenHeight / mHeight);
 	}
 
+	Vector2D LocalToScreen (const Vector2D& local) const {
+		return LocalToScreen (local.x, local.y);
+	}
+
 	Vector2D LocalToRef (float localX, float localY) const {
 		return Vector2D (localX * mRefWidth / mWidth, localY * mRefHeight / mHeight);
+	}
+
+	Vector2D LocalToRef (const Vector2D& local) const {
+		return LocalToRef (local.x, local.y);
 	}
 
 	Vector2D ScreenToLocal (float x, float y) const {
 		return Vector2D (x * mWidth / mScreenWidth, y * mHeight / mScreenHeight);
 	}
 
+	Vector2D ScreenToLocal (const Vector2D& pos) const {
+		return ScreenToLocal (pos.x, pos.y);
+	}
+
 	Vector2D RefToLocal (float refX, float refY) const {
 		return Vector2D (refX * mWidth / mRefWidth, refY * mHeight / mRefHeight);
+	}
+
+	Vector2D RefToLocal (const Vector2D& ref) const {
+		return RefToLocal (ref.x, ref.y);
 	}
 
 //Inner methods
