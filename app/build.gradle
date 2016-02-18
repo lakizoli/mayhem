@@ -98,17 +98,9 @@ class NativeConfig {
 
     def postProcessEmu(basePath, buildConfig) {
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            if (buildConfig == "debug") {
-                this.postProcess = ', "&", "' + basePath.toString().replaceAll('\\\\', '/') + '/after_emu_debug.cmd"'
-            } else {
-                this.postProcess = ', "&", "' + basePath.toString().replaceAll('\\\\', '/') + '/after_emu.cmd"'
-            }
+            this.postProcess = ', "&", "' + basePath.toString().replaceAll('\\\\', '/') + '/after_emu.cmd"'
         } else {
-            if (buildConfig == "debug") {
-                this.postProcess = ' && ./after_emu_debug.sh'
-            } else {
-                this.postProcess = ' && ./after_emu.sh'
-            }
+            this.postProcess = ' && ./after_emu.sh'
         }
     }
 
