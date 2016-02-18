@@ -12,7 +12,11 @@ struct engine_s {
 	unique_ptr<set<int32_t>> pointerIDs;
 	double lastUpdateTime;
 
-	//Emulator data
+	//Emulator parameter data
+	string dataPath;
+	string diskImage;
+
+	//Emulator display data
 	recursive_mutex canvas_lock;
 
 	volatile bool canvas_inited;

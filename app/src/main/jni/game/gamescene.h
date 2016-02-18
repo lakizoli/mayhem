@@ -60,6 +60,11 @@ private:
 
 	map<Buttons, shared_ptr<ImageMesh>> mButtonPresses;
 
+	//Reset watch
+	bool mIsResetInProgress;
+	int mResetFingerID;
+	double mResetStartTime;
+
 //Construction
 public:
 	GameScene () {}
@@ -98,4 +103,8 @@ private:
 
 	void HandleKeyStates (Buttons button);
 	void HandleKey (Buttons button, bool pressed);
+
+	void HandleResetProgressStart (int fingerID, const Vector2D& pos);
+	void HandleResetProgressEnd (int fingerID);
+	void HandleResetProgressMove (int fingerID, const Vector2D& pos);
 };

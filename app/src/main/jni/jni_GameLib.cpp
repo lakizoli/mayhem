@@ -240,6 +240,8 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	char* argv[] = { exeBuffer, diskBuffer };
 	int argc = sizeof (argv) / sizeof (argv[0]);
 
+	g_engine.diskImage = disk;
+
 	//Change working directory to exe dir
 	size_t pos = exe.find_last_of ('/');
 	if (pos != string::npos) {
@@ -249,6 +251,8 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 			LOGE ("GameLib::runEmulator () - Cannot set working directory! error code: %d", res);
 			return -1;
 		}
+
+		g_engine.dataPath = dir;
 	}
 
 	//Set callbacks of engine

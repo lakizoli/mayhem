@@ -5,4 +5,5 @@
 class AndroidUtil : public IUtil {
 public:
 	virtual void Log (const string& log) override;
+	virtual double GetTime () const override;
 };

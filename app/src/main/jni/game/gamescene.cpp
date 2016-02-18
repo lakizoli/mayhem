@@ -11,11 +11,16 @@ extern engine_s g_engine;
 extern "C" void keyboard_key_pressed (signed long key);
 extern "C" void keyboard_key_released (signed long key);
 
+#define MACHINE_RESET_MODE_HARD 1
+extern "C" void vsync_suspend_speed_eval ();
+extern "C" void machine_trigger_reset (const unsigned int reset_mode);
+
+#define AUTOSTART_MODE_RUN  0
+extern "C" int autostart_disk (const char *file_name, const char *program_name, unsigned int program_number, unsigned int runmode);
+
 //TODO: -> a pause javitasa
 
-//TODO: device size change javitasa (check tablet)
 //TODO: az aktualis allapot mentesenek implementalasa (berakas a pause-be is, mert kiszallas elott pause jon!)
-//TODO: 10 sec fire press -> reset game implementalasa
 //TODO: reklam elhelyezese a jatekban
 
 void GameScene::Init (float width, float height) {
@@ -38,6 +43,10 @@ void GameScene::Init (float width, float height) {
 
 	mButtonStates = (uint32_t) Buttons::None;
 	mButtonLastStates = (uint32_t) Buttons::None;
+
+	mIsResetInProgress = false;
+	mResetFingerID = -1;
+	mResetStartTime = 0;
 }
 
 void GameScene::Shutdown () {
@@ -209,6 +218,30 @@ void GameScene::Update (float elapsedTime) {
 
 		mButtonLastStates = mButtonStates;
 	}
+
+	//Handle reset
+	if (mIsResetInProgress) {
+		double currentTime = Game::Util ().GetTime ();
+		if (currentTime - mResetStartTime > 5) { //Hold fire button until 5 sec to reset machine...
+			mButtonStates = (uint32_t) Buttons::None;
+			mButtonLastStates = (uint32_t) Buttons::None;
+			mButtonFingerIDs.clear ();
+
+			mScreenCounter = 0;
+			mDrawCounter = 0;
+			mNoDrawCounter = 0;
+			mRedSum = 0;
+			mGreenSum = 0;
+			mBlueSum = 0;
+
+			mState = GameStates::Blue;
+
+			vsync_suspend_speed_eval ();
+			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
+
+			autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
+		}
+	}
 }
 
 void GameScene::Render () {
@@ -248,84 +281,54 @@ void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
 	Scene::TouchDown (fingerID, pos);
 
 	if (mState == GameStates::Game) {
-//		stringstream ss;
-//		ss << "GameScene::TouchDown () - fingerID: " << fingerID << ", pos: " << pos;
-//		LOGD ("%s", ss.str ().c_str ());
-
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
 			if (it->second && (mButtonStates & (uint32_t) it->first) != (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If button not pressed
-//				stringstream ss2;
-//				ss2 << "GameScene::TouchDown () - button pressed! id: " << (uint32_t) it->first;
-//				LOGD ("%s", ss2.str ().c_str ());
-
 				mButtonStates |= (uint32_t) it->first;
 				mButtonFingerIDs[fingerID] = it->first;
 
 				HandleKey (it->first, true);
-
-//				stringstream ss3;
-//				ss3 << "GameScene::TouchDown () - button state: " << mButtonStates;
-//				LOGD ("%s", ss3.str ().c_str ());
 				break;
 			}
 		}
 	}
+
+	//Handle reset progress start
+	HandleResetProgressStart (fingerID, pos);
 }
 
 void GameScene::TouchUp (int fingerID, const Vector2D& pos) {
 	Scene::TouchUp (fingerID, pos);
 
 	if (mState == GameStates::Game) {
-//		stringstream ss;
-//		ss << "GameScene::TouchUp () - fingerID: " << fingerID << ", pos: " << pos;
-//		LOGD ("%s", ss.str ().c_str ());
-
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
 			if (it->second && (mButtonStates & (uint32_t) it->first) == (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If already in pressed state
-//				stringstream ss2;
-//				ss2 << "GameScene::TouchUp () - button released! id: " << (uint32_t) it->first;
-//				LOGD ("%s", ss2.str ().c_str ());
-
 				HandleKey (it->first, false);
 
 				mButtonStates &= !((uint32_t) it->first);
 				mButtonFingerIDs.erase (fingerID);
-
-//				stringstream ss3;
-//				ss3 << "GameScene::TouchUp () - button state: " << mButtonStates;
-//				LOGD ("%s", ss3.str ().c_str ());
 				break;
 			}
 		}
 	}
+
+	//Handle reset progress cancel
+	HandleResetProgressEnd (fingerID);
 }
 
 void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 	Scene::TouchMove (fingerID, pos);
 
 	if (mState == GameStates::Game) {
-//		stringstream ss;
-//		ss << "GameScene::TouchMove () - fingerID: " << fingerID << ", pos: " << pos;
-//		LOGD ("%s", ss.str ().c_str ());
-
 		//Handle key move out (release touch under finger)
 		{
 			auto it = mButtonFingerIDs.find (fingerID);
 			if (it != mButtonFingerIDs.end ()) {
 				auto itButton = mButtons.find (it->second);
 				if (itButton != mButtons.end () && !itButton->second->TransformedBoundingBox ().Contains (pos)) { //Touch up of button, when finger moved out from region
-//					stringstream ss2;
-//					ss2 << "GameScene::TouchMove () - button released! id: " << (uint32_t) it->second;
-//					LOGD ("%s", ss2.str ().c_str ());
-
 					HandleKey (it->second, false);
 
 					mButtonStates &= !((uint32_t) it->second);
 					mButtonFingerIDs.erase (fingerID);
-
-//					stringstream ss3;
-//					ss3 << "GameScene::TouchMove () - button state after release: " << mButtonStates;
-//					LOGD ("%s", ss3.str ().c_str ());
 				}
 			}
 		}
@@ -333,22 +336,17 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 		//Handle key move in (touch button under finger)
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
 			if (it->second && (mButtonStates & (uint32_t) it->first) != (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //Handle key press by move
-//				stringstream ss2;
-//				ss2 << "GameScene::TouchMove () - button pressed! id: " << (uint32_t) it->first;
-//				LOGD ("%s", ss2.str ().c_str ());
-
 				mButtonStates |= (uint32_t) it->first;
 				mButtonFingerIDs[fingerID] = it->first;
 
 				HandleKey (it->first, true);
-
-//				stringstream ss3;
-//				ss3 << "GameScene::TouchMove () - button state after press: " << mButtonStates;
-//				LOGD ("%s", ss3.str ().c_str ());
 				break;
 			}
 		}
 	}
+
+	//Handle reset progress cancel
+	HandleResetProgressMove (fingerID, pos);
 }
 
 void GameScene::ConvertBGRADuringLoad () {
@@ -439,6 +437,10 @@ void GameScene::DestroyButtons () {
 	mButtonStates = (uint32_t) Buttons::None;
 	mButtonLastStates = (uint32_t) Buttons::None;
 	mButtonFingerIDs.clear ();
+
+	mIsResetInProgress = false;
+	mResetFingerID = -1;
+	mResetStartTime = 0;
 }
 
 void GameScene::CreateButton (bool isVerticalLayout, Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale,
@@ -613,5 +615,42 @@ void GameScene::HandleKey (Buttons button, bool pressed) {
 			break;
 		default:
 			break;
+	}
+}
+
+void GameScene::HandleResetProgressStart (int fingerID, const Vector2D& pos) {
+	if (mIsResetInProgress)
+		return;
+
+	auto it = mButtons.find (Buttons::Fire);
+	if (it != mButtons.end () && it->second && it->second->TransformedBoundingBox ().Contains (pos)) {
+		mIsResetInProgress = true;
+		mResetFingerID = fingerID;
+		mResetStartTime = Game::Util ().GetTime ();
+	}
+}
+
+void GameScene::HandleResetProgressEnd (int fingerID) {
+	if (!mIsResetInProgress)
+		return;
+
+	if (fingerID == mResetFingerID) {
+		mIsResetInProgress = false;
+		mResetFingerID = -1;
+		mResetStartTime = 0;
+	}
+}
+
+void GameScene::HandleResetProgressMove (int fingerID, const Vector2D& pos) {
+	if (!mIsResetInProgress)
+		return;
+
+	if (fingerID == mResetFingerID) {
+		auto it = mButtons.find (Buttons::Fire);
+		if (it != mButtons.end () && it->second && !it->second->TransformedBoundingBox ().Contains (pos)) {
+			mIsResetInProgress = false;
+			mResetFingerID = -1;
+			mResetStartTime = 0;
+		}
 	}
 }
