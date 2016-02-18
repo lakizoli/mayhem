@@ -199,7 +199,7 @@ void GameScene::Update (float elapsedTime) {
 	}
 
 	//Handle input events
-	if (mState == GameStates::Game && mButtonStates != mButtonLastStates) {
+	if (mState == GameStates::Game /*&& mButtonStates != mButtonLastStates*/) {
 		HandleKeyStates (Buttons::Left);
 		HandleKeyStates (Buttons::Right);
 		HandleKeyStates (Buttons::Up);
@@ -207,7 +207,7 @@ void GameScene::Update (float elapsedTime) {
 		HandleKeyStates (Buttons::Fire);
 		HandleKeyStates (Buttons::C64);
 
-		mButtonLastStates = mButtonStates;
+		//mButtonLastStates = mButtonStates;
 	}
 }
 
@@ -261,7 +261,7 @@ void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
 				mButtonStates |= (uint32_t) it->first;
 				mButtonFingerIDs[fingerID] = it->first;
 
-				//HandleKey (it->first, true);
+				HandleKey (it->first, true);
 
 //				stringstream ss3;
 //				ss3 << "GameScene::TouchDown () - button state: " << mButtonStates;
@@ -286,7 +286,7 @@ void GameScene::TouchUp (int fingerID, const Vector2D& pos) {
 //				ss2 << "GameScene::TouchUp () - button released! id: " << (uint32_t) it->first;
 //				LOGD ("%s", ss2.str ().c_str ());
 
-				//HandleKey (it->first, false);
+				HandleKey (it->first, false);
 
 				mButtonStates &= !((uint32_t) it->first);
 				mButtonFingerIDs.erase (fingerID);
@@ -318,7 +318,7 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 //					ss2 << "GameScene::TouchMove () - button released! id: " << (uint32_t) it->second;
 //					LOGD ("%s", ss2.str ().c_str ());
 
-					//HandleKey (it->second, false);
+					HandleKey (it->second, false);
 
 					mButtonStates &= !((uint32_t) it->second);
 					mButtonFingerIDs.erase (fingerID);
@@ -340,7 +340,7 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 				mButtonStates |= (uint32_t) it->first;
 				mButtonFingerIDs[fingerID] = it->first;
 
-				//HandleKey (it->first, true);
+				HandleKey (it->first, true);
 
 //				stringstream ss3;
 //				ss3 << "GameScene::TouchMove () - button state after press: " << mButtonStates;
@@ -352,7 +352,7 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 }
 
 void GameScene::ConvertBGRADuringLoad () {
-//	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
 	assert (g_engine.visible_height <= g_engine.canvas_height);
 
@@ -394,7 +394,7 @@ void GameScene::ConvertBGRADuringLoad () {
 }
 
 void GameScene::ConvertBGRAInGame () {
-//	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
 	assert (g_engine.visible_height <= g_engine.canvas_height);
 
@@ -560,9 +560,9 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 }
 
 void GameScene::HandleKeyStates (Buttons button) {
-	if ((mButtonStates & (uint32_t)button) && !(mButtonLastStates & (uint32_t)button)) { //Button pressed
+	if ((mButtonStates & (uint32_t)button) /*&& !(mButtonLastStates & (uint32_t)button)*/) { //Button pressed
 		HandleKey (button, true);
-	} else if (!(mButtonStates & (uint32_t)button) && (mButtonLastStates & (uint32_t)button)) { //Button released
+	} else if (!(mButtonStates & (uint32_t)button) /*&& (mButtonLastStates & (uint32_t)button)*/) { //Button released
 		HandleKey (button, false);
 	}
 }
