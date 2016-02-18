@@ -134,7 +134,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
 	//Get current time
 	timespec now;
-	clock_gettime (CLOCK_MONOTONIC_RAW, &now);
+	clock_gettime (CLOCK_MONOTONIC, &now);
 	double currentTime = (double) now.tv_sec + (double) now.tv_nsec / 1e9;
 
 	//Update the game
