@@ -55,6 +55,7 @@ private:
 	//Button data
 	map<Buttons, shared_ptr<ColoredMesh>> mButtons;
 	uint32_t mButtonStates;
+	uint32_t mButtonLastStates;
 	map<int, Buttons> mButtonFingerIDs;
 
 	map<Buttons, shared_ptr<ImageMesh>> mButtonPresses;
@@ -95,5 +96,6 @@ private:
 	void InitVerticalLayout (bool initButtons);
 	void InitHorizontalLayout (bool initButtons);
 
+	void HandleKeyStates (Buttons button);
 	void HandleKey (Buttons button, bool pressed);
 };

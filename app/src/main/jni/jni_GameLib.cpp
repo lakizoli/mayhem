@@ -62,12 +62,12 @@ static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint32_t v
 }
 
 static void LockCanvas () {
-	g_engine.canvas_lock.lock ();
+//	g_engine.canvas_lock.lock ();
 }
 
 static void UnlockCanvas () {
 	g_engine.canvas_dirty = true;
-	g_engine.canvas_lock.unlock ();
+//	g_engine.canvas_lock.unlock ();
 }
 
 static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
@@ -134,7 +134,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
 	//Get current time
 	timespec now;
-	clock_gettime (CLOCK_MONOTONIC, &now);
+	clock_gettime (CLOCK_MONOTONIC_RAW, &now);
 	double currentTime = (double) now.tv_sec + (double) now.tv_nsec / 1e9;
 
 	//Update the game
@@ -145,6 +145,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 
 	if (ui_emulation_is_paused ()) //Handle pause
 		return;
+
+//	static uint32_t frameIndex = 0;
+//	++frameIndex;
+//	if (elapsedTime < 0.01 || elapsedTime > 0.02) {
+//		LOGI ("step! frameIndex: %u elapsed time: %.4f", frameIndex, (float) elapsedTime);
+//	}
 
 	g_engine.game->Update ((float)elapsedTime);
 
