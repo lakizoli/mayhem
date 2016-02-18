@@ -199,7 +199,7 @@ void GameScene::Update (float elapsedTime) {
 	}
 
 	//Handle input events
-	if (mState == GameStates::Game /*&& mButtonStates != mButtonLastStates*/) {
+	if (mState == GameStates::Game && mButtonStates != mButtonLastStates) {
 		HandleKeyStates (Buttons::Left);
 		HandleKeyStates (Buttons::Right);
 		HandleKeyStates (Buttons::Up);
@@ -207,7 +207,7 @@ void GameScene::Update (float elapsedTime) {
 		HandleKeyStates (Buttons::Fire);
 		HandleKeyStates (Buttons::C64);
 
-		//mButtonLastStates = mButtonStates;
+		mButtonLastStates = mButtonStates;
 	}
 }
 
@@ -560,9 +560,9 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 }
 
 void GameScene::HandleKeyStates (Buttons button) {
-	if ((mButtonStates & (uint32_t)button) /*&& !(mButtonLastStates & (uint32_t)button)*/) { //Button pressed
+	if ((mButtonStates & (uint32_t)button) && !(mButtonLastStates & (uint32_t)button)) { //Button pressed
 		HandleKey (button, true);
-	} else if (!(mButtonStates & (uint32_t)button) /*&& (mButtonLastStates & (uint32_t)button)*/) { //Button released
+	} else if (!(mButtonStates & (uint32_t)button) && (mButtonLastStates & (uint32_t)button)) { //Button released
 		HandleKey (button, false);
 	}
 }
