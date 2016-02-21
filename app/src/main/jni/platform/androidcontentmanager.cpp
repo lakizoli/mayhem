@@ -220,6 +220,11 @@ bool AndroidContentManager::IsSoundEnded (int soundID) const {
 	return audioManager.IsEnded (soundID);
 }
 
+void AndroidContentManager::PausePCM () {
+	AudioManager& audioManager = AudioManager::Get ();
+	return audioManager.PausePCM ();
+}
+
 string AndroidContentManager::ReadFile (const string& fileName) const {
 	JNI_ContentManager& jni = JNI_ContentManager::Get ();
 	JNIEnv* env = JNI::GetEnv ();

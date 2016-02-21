@@ -69,6 +69,7 @@ public:
 	void ClosePCM ();
 
 	void WritePCM (const uint8_t* buffer, size_t size);
+	void PausePCM ();
 
 //Helper methods
 private:
@@ -96,6 +97,7 @@ private:
 	int mPCMBytesPerSample;
 	int mPCMWriteBufferIndex;
 	float mPCMVolume;
+	bool mPCMPaused;
 
 	AAssetManager* mAssetManager;
 };

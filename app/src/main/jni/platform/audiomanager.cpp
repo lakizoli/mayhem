@@ -94,6 +94,7 @@ AudioManager::AudioManager () :
 	mPCMBytesPerSample (0),
 	mPCMWriteBufferIndex (0),
 	mPCMVolume (0),
+	mPCMPaused (false),
 	mAssetManager (nullptr) {
 }
 
@@ -144,6 +145,7 @@ void AudioManager::Shutdown () {
 	mPCMBytesPerSample = 0;
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = 0;
+	mPCMPaused = false;
 
 	for (auto& it : mPlayers)
 		delete it.second;
@@ -391,6 +393,7 @@ void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int b
 	mPCMBytesPerSample = bytesPerSample;
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = volume;
+	mPCMPaused = false;
 
 	mPCMs.clear ();
 	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample ((size_t) mPCMBytesPerSample)));
@@ -421,6 +424,28 @@ void AudioManager::WritePCM (const uint8_t* buffer, size_t size) {
 
 	if (mPCMPlayer == nullptr) //Start playing in the first moment
 		StartPCM ();
+	else if (mPCMPaused) { //Continue when paused playback from client
+		PlayerPCM* player = mPCMPlayer.get ();
+		SLresult result = (*player->play)->SetPlayState (player->play, SL_PLAYSTATE_PLAYING);
+		CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::WritePCM () - Play::SetPlayState (Play) failed");
+	}
+}
+
+void AudioManager::PausePCM () {
+	//Start playing
+	if (mPCMPlayer) {
+		PlayerPCM* player = mPCMPlayer.get ();
+		SLresult result = (*player->play)->SetPlayState (player->play, SL_PLAYSTATE_STOPPED);
+		CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::PausePCM () - Play::SetPlayState (Stop) failed");
+
+		mPCMPaused = true;
+	}
+
+	//Clear all buffer, and reset player
+	for (size_t i = 0;i < mPCMs.size ();++i)
+		mPCMs[i]->Rewind ();
+
+	mPCMWriteBufferIndex = 0;
 }
 
 void AudioManager::StartPCM () {

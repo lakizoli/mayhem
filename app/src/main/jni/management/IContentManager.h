@@ -22,6 +22,8 @@ public:
 	virtual void StopSound (int soundID) = 0;
 	virtual bool IsSoundEnded (int soundID) const = 0;
 
+	virtual void PausePCM () = 0;
+
 	virtual string ReadFile (const string& fileName) const = 0;
 	virtual void WriteFile (const string& fileName, const string& content) = 0;
 

@@ -5,11 +5,11 @@
 #include "../content/texanimmesh.h"
 #include "../content/coloredmesh.h"
 #include "../content/imagemesh.h"
-#include "../jnihelper/jniload.h"
 
 extern engine_s g_engine;
 extern "C" void keyboard_key_pressed (signed long key);
 extern "C" void keyboard_key_released (signed long key);
+extern "C" void keyboard_key_clear ();
 
 #define MACHINE_RESET_MODE_HARD 1
 extern "C" void vsync_suspend_speed_eval ();
@@ -18,9 +18,11 @@ extern "C" void machine_trigger_reset (const unsigned int reset_mode);
 #define AUTOSTART_MODE_RUN  0
 extern "C" int autostart_disk (const char *file_name, const char *program_name, unsigned int program_number, unsigned int runmode);
 
-//TODO: -> a pause javitasa
+extern "C" int ui_quicksnapshot_load ();
+extern "C" void ui_quicksnapshot_remove ();
+extern "C" void ui_quicksnapshot_save ();
+extern "C" int resources_set_int (const char *name, int value);
 
-//TODO: az aktualis allapot mentesenek implementalasa (berakas a pause-be is, mert kiszallas elott pause jon!)
 //TODO: reklam elhelyezese a jatekban
 
 void GameScene::Init (float width, float height) {
@@ -63,6 +65,9 @@ void GameScene::Shutdown () {
 }
 
 void GameScene::Pause () {
+	if (mState == GameStates::Game) { //Save the game (only when game loaded at first time!)
+		ui_quicksnapshot_save ();
+	}
 	Shutdown ();
 }
 
@@ -110,7 +115,7 @@ void GameScene::Update (float elapsedTime) {
 	//Update C64 screen texture
 	if (mC64Screen) {
 		if (g_engine.canvas_dirty) { //Something changed on the screen, so we need to refresh the texture
-//			LOGI ("dirty");
+//			Game::Util ().Log ("dirty");
 
 			++mScreenCounter;
 			++mDrawCounter;
@@ -129,8 +134,18 @@ void GameScene::Update (float elapsedTime) {
 			//Handle game state transitions during initialization (C64 load process)
 			switch (mState) {
 				case GameStates::Blue:
-					if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000)
+					if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
 						mState = GameStates::AfterBlue;
+
+						//Try to load snapshot
+						int snapshot_loaded = ui_quicksnapshot_load ();
+						if (snapshot_loaded) {
+							resources_set_int ("WarpMode", 0);
+
+							mRedSum = mGreenSum = mBlueSum = 0;
+							mState = GameStates::Game;
+						}
+					}
 					break;
 				case GameStates::AfterBlue:
 					if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
@@ -236,8 +251,13 @@ void GameScene::Update (float elapsedTime) {
 
 			mState = GameStates::Blue;
 
+			ui_quicksnapshot_remove ();
+
 			vsync_suspend_speed_eval ();
 			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
+			keyboard_key_clear ();
+
+			Game::ContentManager ().PausePCM ();
 
 			autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
 		}

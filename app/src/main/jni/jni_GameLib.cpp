@@ -95,7 +95,9 @@ static void SoundClose () {
 
 static void SoundWrite (const uint8_t* buffer, size_t size) {
 	AudioManager& man = AudioManager::Get ();
-	man.WritePCM (buffer, size);
+	if (!g_engine.is_paused) {
+		man.WritePCM (buffer, size);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +114,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 	}
 
 	g_engine.lastUpdateTime = -1;
+	g_engine.is_paused = false;
 
 	g_engine.canvas_inited = false;
 	g_engine.canvas_width = 0;
@@ -159,8 +162,13 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_pause (JNIEnv* env, jclass type) {
+	g_engine.is_paused = true;
+
 	g_engine.game->Pause ();
 	ui_pause_emulation ();
+
+	AudioManager& man = AudioManager::Get ();
+	man.PausePCM ();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, jclass type) {
@@ -168,6 +176,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, j
 
 	ui_continue_emulation ();
 	g_engine.game->Continue ();
+
+	g_engine.is_paused = false;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isPaused (JNIEnv* env, jclass type) {

@@ -24,6 +24,8 @@ public:
 	virtual void StopSound (int soundID) override;
 	virtual bool IsSoundEnded (int soundID) const override;
 
+	virtual void PausePCM () override;
+
 	virtual string ReadFile (const string& fileName) const override;
 	virtual void WriteFile (const string& fileName, const string& content) override;
 
