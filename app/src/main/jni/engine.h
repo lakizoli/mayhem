@@ -19,7 +19,7 @@ struct engine_s {
 	string diskImage;
 
 	//Emulator display data
-	recursive_mutex canvas_lock;
+//	recursive_mutex canvas_lock;
 
 	volatile bool canvas_inited;
 	uint32_t canvas_width;

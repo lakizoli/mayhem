@@ -133,6 +133,10 @@ void GameScene::Update (float elapsedTime) {
 			else
 				ConvertBGRADuringLoad ();
 
+			stringstream ss;
+			ss << "sc: " << mScreenCounter << ", dc: " << mDrawCounter << ", ndc: " << mNoDrawCounter << ", R: " << mRedSum << ", G: " << mGreenSum << ", B: " << mBlueSum;
+			Game::Util ().Log (ss.str ());
+
 			//Handle game state transitions during initialization (C64 load process)
 			switch (mState) {
 				case GameStates::Blue:
@@ -151,6 +155,7 @@ void GameScene::Update (float elapsedTime) {
 					break;
 				case GameStates::AfterBlue:
 					if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
+						resources_set_int ("WarpMode", 0);
 						keyboard_key_clear ();
 
 						mScreenCounter = 0;
@@ -159,8 +164,10 @@ void GameScene::Update (float elapsedTime) {
 					break;
 				case GameStates::Demo:
 					if (mScreenCounter >= 4 && mScreenCounter <= 6) {
+						Game::Util ().Log ("Space pressed (Demo)");
 						keyboard_key_pressed (57); //press space on keyboard
 					} else if (mScreenCounter > 6) {
+						Game::Util ().Log ("Space pressed (Released)");
 						keyboard_key_released (57); //release space on keyboard
 						mState = GameStates::AfterDemo;
 					}
@@ -181,14 +188,18 @@ void GameScene::Update (float elapsedTime) {
 					break;
 				case GameStates::Hack:
 					if (mScreenCounter == 1) {
+						Game::Util ().Log ("F1 pressed");
 						keyboard_key_pressed (59); //F1
 					} else if (mScreenCounter == 2) {
+						Game::Util ().Log ("F1 released, F3 pressed");
 						keyboard_key_released (59); //F1
 						keyboard_key_pressed (61); //F3
 					} else if (mScreenCounter == 3) {
+						Game::Util ().Log ("F3 released, F5 pressed");
 						keyboard_key_released (61); //F3
 						keyboard_key_pressed (63); //F5
 					} else if (mScreenCounter == 4) {
+						Game::Util ().Log ("F5 released");
 						keyboard_key_released (63); //F5
 
 						mScreenCounter = 0;
@@ -198,6 +209,7 @@ void GameScene::Update (float elapsedTime) {
 					break;
 				case GameStates::AfterHack:
 					if (mSpacePressed && mScreenCounter >= 1 && mScreenCounter <= 4) {
+						Game::Util ().Log ("Space released (After hack)");
 						keyboard_key_released (57); //release space
 					} else if (mScreenCounter > 4) {
 						keyboard_key_clear ();
@@ -223,6 +235,7 @@ void GameScene::Update (float elapsedTime) {
 			switch (mState) {
 				case GameStates::AfterHack:
 					if (!mSpacePressed && mNoDrawCounter >= 1 && mNoDrawCounter <= 3) {
+						Game::Util ().Log ("Space pressed (After hack)");
 						keyboard_key_pressed (57); //press space
 						mSpacePressed = mNoDrawCounter == 3;
 					}
@@ -382,7 +395,7 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 }
 
 void GameScene::ConvertBGRADuringLoad () {
-	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+//	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
 	assert (g_engine.visible_height <= g_engine.canvas_height);
 
@@ -424,7 +437,7 @@ void GameScene::ConvertBGRADuringLoad () {
 }
 
 void GameScene::ConvertBGRAInGame () {
-	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+//	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
 	assert (g_engine.visible_height <= g_engine.canvas_height);
 
