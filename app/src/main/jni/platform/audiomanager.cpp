@@ -94,7 +94,6 @@ AudioManager::AudioManager () :
 	mPCMBytesPerSample (0),
 	mPCMWriteBufferIndex (0),
 	mPCMVolume (0),
-	mPCMPaused (false),
 	mAssetManager (nullptr) {
 }
 
@@ -145,7 +144,6 @@ void AudioManager::Shutdown () {
 	mPCMBytesPerSample = 0;
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = 0;
-	mPCMPaused = false;
 
 	for (auto& it : mPlayers)
 		delete it.second;
@@ -393,7 +391,6 @@ void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int b
 	mPCMBytesPerSample = bytesPerSample;
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = volume;
-	mPCMPaused = false;
 
 	mPCMs.clear ();
 	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample ((size_t) mPCMBytesPerSample)));
@@ -424,21 +421,17 @@ void AudioManager::WritePCM (const uint8_t* buffer, size_t size) {
 
 	if (mPCMPlayer == nullptr) //Start playing in the first moment
 		StartPCM ();
-	else if (mPCMPaused) { //Continue when paused playback from client
-		PlayerPCM* player = mPCMPlayer.get ();
-		SLresult result = (*player->play)->SetPlayState (player->play, SL_PLAYSTATE_PLAYING);
-		CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::WritePCM () - Play::SetPlayState (Play) failed");
-	}
 }
 
-void AudioManager::PausePCM () {
+void AudioManager::PausePCM (bool resetPlayer) {
 	//Start playing
 	if (mPCMPlayer) {
 		PlayerPCM* player = mPCMPlayer.get ();
+
 		SLresult result = (*player->play)->SetPlayState (player->play, SL_PLAYSTATE_STOPPED);
 		CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::PausePCM () - Play::SetPlayState (Stop) failed");
 
-		mPCMPaused = true;
+		player->bufferIndex = -1;
 	}
 
 	//Clear all buffer, and reset player
@@ -446,6 +439,10 @@ void AudioManager::PausePCM () {
 		mPCMs[i]->Rewind ();
 
 	mPCMWriteBufferIndex = 0;
+
+	//Reset player if needed
+	if (resetPlayer)
+		mPCMPlayer.reset ();
 }
 
 void AudioManager::StartPCM () {
@@ -575,11 +572,12 @@ void SLAPIENTRY AudioManager::QueueCallback (SLAndroidSimpleBufferQueueItf queue
 	CHECKMSG (player != nullptr, "AudioManager::QueueCallback () - player cannot be nullptr!");
 
 	player->bufferIndex = (player->bufferIndex + 1) % 2;
-//	LOGI ("starting to play buffer! index: %d", player->bufferIndex);
+	LOGI ("starting to play buffer! index: %d", player->bufferIndex);
 
 	shared_ptr<PCMSample> sample = man->mPCMs[player->bufferIndex];
 	CHECKMSG (sample != nullptr, "AudioManager::QueueCallback () - sample cannot be nullptr!");
 
+	size_t size = sample->buffer.size ();
 	SLresult result = (*queue)->Enqueue (queue, &(sample->buffer[0]), (SLuint32) sample->buffer.size ());
 	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::QueueCallback () - Enqueue of new sample failed!");
 }

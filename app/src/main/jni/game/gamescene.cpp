@@ -133,8 +133,11 @@ void GameScene::Update (float elapsedTime) {
 					if (mIsResetInProgress && mIsResetStarted) {
 						if (!mIsAutoStartInited) {
 							mIsAutoStartInited = true;
+
 							Game::Util ().Log ("Auto starting disk image");
 							autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
+
+							Game::ContentManager ().PausePCM (true);
 						}
 					} else if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
 						mState = GameStates::AfterBlue;
@@ -274,8 +277,6 @@ void GameScene::Update (float elapsedTime) {
 			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
 
 			keyboard_key_clear ();
-
-			Game::ContentManager ().PausePCM ();
 		}
 	}
 }

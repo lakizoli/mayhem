@@ -220,9 +220,9 @@ bool AndroidContentManager::IsSoundEnded (int soundID) const {
 	return audioManager.IsEnded (soundID);
 }
 
-void AndroidContentManager::PausePCM () {
+void AndroidContentManager::PausePCM (bool resetPlayer) {
 	AudioManager& audioManager = AudioManager::Get ();
-	return audioManager.PausePCM ();
+	return audioManager.PausePCM (resetPlayer);
 }
 
 string AndroidContentManager::ReadFile (const string& fileName) const {
