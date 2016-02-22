@@ -14,10 +14,15 @@ private:
 	enum class GameStates {
 		Blue, ///< First state -> turn off input and sound.
 		AfterBlue, ///< Second state -> over 10 million color componentsum (red, green, blue)
-		Demo, ///< When Screen is under 10 million color componentsum (red, green, blue) -> we turn off screen and push the space button...
+		DemoPressSpace, ///< When Screen is under 10 million color componentsum (red, green, blue) -> we turn off screen and push the space button... (Space press)
+		DemoReleaseSpace, ///< When Screen is under 10 million color componentsum (red, green, blue) -> we turn off screen and push the space button... (Space release)
 		AfterDemo, ///< After the demo screen -> We pushed space on the demo screen
 		BeforeHack, ///< The state before hack screen -> all component sum is 0
-		Hack, ///< Hack screen -> We need to turn on unlimited capabilities...
+		HackPressF1, ///< Hack screen -> We need to turn on unlimited capabilities... (F1 press)
+		HackPressF3, ///< Hack screen -> We need to turn on unlimited capabilities... (F3 press)
+		HackPressF5, ///< Hack screen -> We need to turn on unlimited capabilities... (F5 press)
+		HackPressSpace, ///< Hack screen -> We need to turn on unlimited capabilities... (Space press)
+		HackReleaseSpace, ///< Hack screen -> We need to turn on unlimited capabilities... (Space release)
 		AfterHack, ///< After the hack screen -> We turned the unlimited capabilities...
 		Game, ///< After the hack screen -> turn on input, screen and sound...
 	};
@@ -40,13 +45,9 @@ private:
 	shared_ptr<TexAnimMesh> mC64Screen;
 	vector<uint8_t> mC64Pixels;
 
-	uint64_t mScreenCounter;
-	uint64_t mDrawCounter;
-	uint64_t mNoDrawCounter;
 	uint32_t mRedSum;
 	uint32_t mGreenSum;
 	uint32_t mBlueSum;
-	bool mSpacePressed;
 
 	GameStates mState;
 
@@ -65,6 +66,7 @@ private:
 	bool mIsResetInProgress;
 	int mResetFingerID;
 	double mResetStartTime;
+	bool mIsResetStarted;
 
 //Construction
 public:

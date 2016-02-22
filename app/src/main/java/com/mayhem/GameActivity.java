@@ -29,7 +29,7 @@ public class GameActivity extends Activity {
 		super.onCreate (icicle);
 		init (getAssets ());
 
-		mEmulatorThread = new Thread () {
+		mEmulatorThread = new Thread ("c64_emulator") {
 			@Override
 			public void run () {
 				GameLib.runEmulator ();

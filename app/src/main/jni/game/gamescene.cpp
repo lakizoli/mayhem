@@ -29,13 +29,9 @@ void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
 	mBackground.reset ();
 
-	mScreenCounter = 0;
-	mDrawCounter = 0;
-	mNoDrawCounter = 0;
 	mRedSum = 0;
 	mGreenSum = 0;
 	mBlueSum = 0;
-	mSpacePressed = false;
 
 	mState = GameStates::Blue;
 
@@ -50,6 +46,7 @@ void GameScene::Init (float width, float height) {
 	mIsResetInProgress = false;
 	mResetFingerID = -1;
 	mResetStartTime = 0;
+	mIsResetStarted = false;
 }
 
 void GameScene::Shutdown () {
@@ -103,13 +100,9 @@ void GameScene::Update (float elapsedTime) {
 		uint32_t bytePerPixel = g_engine.canvas_bit_per_pixel / 8;
 		mC64Pixels.resize (g_engine.visible_width * g_engine.visible_height * bytePerPixel);
 
-		mScreenCounter = 0;
-		mDrawCounter = 0;
-		mNoDrawCounter = 0;
 		mRedSum = 0;
 		mGreenSum = 0;
 		mBlueSum = 0;
-		mSpacePressed = false;
 
 		mState = GameStates::Blue;
 	}
@@ -118,10 +111,6 @@ void GameScene::Update (float elapsedTime) {
 	if (mC64Screen) {
 		if (g_engine.canvas_dirty) { //Something changed on the screen, so we need to refresh the texture
 //			Game::Util ().Log ("dirty");
-
-			++mScreenCounter;
-			++mDrawCounter;
-			mNoDrawCounter = 0;
 
 			mRedSum = 0;
 			mGreenSum = 0;
@@ -133,9 +122,9 @@ void GameScene::Update (float elapsedTime) {
 			else
 				ConvertBGRADuringLoad ();
 
-			stringstream ss;
-			ss << "sc: " << mScreenCounter << ", dc: " << mDrawCounter << ", ndc: " << mNoDrawCounter << ", R: " << mRedSum << ", G: " << mGreenSum << ", B: " << mBlueSum;
-			Game::Util ().Log (ss.str ());
+//			stringstream ss;
+//			ss << "draw -> R: " << mRedSum << ", G: " << mGreenSum << ", B: " << mBlueSum;
+//			Game::Util ().Log (ss.str ());
 
 			//Handle game state transitions during initialization (C64 load process)
 			switch (mState) {
@@ -158,65 +147,76 @@ void GameScene::Update (float elapsedTime) {
 						resources_set_int ("WarpMode", 0);
 						keyboard_key_clear ();
 
-						mScreenCounter = 0;
-						mState = GameStates::Demo;
+						mState = GameStates::DemoPressSpace;
 					}
 					break;
-				case GameStates::Demo:
-					if (mScreenCounter >= 4 && mScreenCounter <= 6) {
+				case GameStates::DemoPressSpace:
+					if (mRedSum > 5000000 && mGreenSum > 5000000 && mBlueSum > 5000000) {
 						Game::Util ().Log ("Space pressed (Demo)");
 						keyboard_key_pressed (57); //press space on keyboard
-					} else if (mScreenCounter > 6) {
-						Game::Util ().Log ("Space pressed (Released)");
-						keyboard_key_released (57); //release space on keyboard
-						mState = GameStates::AfterDemo;
+
+						mState = GameStates::DemoReleaseSpace;
 					}
+					break;
+				case GameStates::DemoReleaseSpace:
+					Game::Util ().Log ("Space pressed (Released)");
+					keyboard_key_released (57); //release space on keyboard
+
+					mState = GameStates::AfterDemo;
 					break;
 				case GameStates::AfterDemo:
 					if (mRedSum == 0 && mGreenSum == 0 && mBlueSum == 0) {
-						mScreenCounter = 0;
 						mState = GameStates::BeforeHack;
+					} else {
+						Game::Util ().Log ("Space pressed (After demo)");
+						keyboard_key_pressed (57); //press space on keyboard
 					}
 					break;
 				case GameStates::BeforeHack:
 					if (mRedSum > 0 && mGreenSum > 0 && mBlueSum > 0) {
 						keyboard_key_clear ();
 
-						mScreenCounter = 0;
-						mState = GameStates::Hack;
+						mState = GameStates::HackPressF1;
 					}
 					break;
-				case GameStates::Hack:
-					if (mScreenCounter == 1) {
-						Game::Util ().Log ("F1 pressed");
-						keyboard_key_pressed (59); //F1
-					} else if (mScreenCounter == 2) {
-						Game::Util ().Log ("F1 released, F3 pressed");
-						keyboard_key_released (59); //F1
-						keyboard_key_pressed (61); //F3
-					} else if (mScreenCounter == 3) {
-						Game::Util ().Log ("F3 released, F5 pressed");
-						keyboard_key_released (61); //F3
-						keyboard_key_pressed (63); //F5
-					} else if (mScreenCounter == 4) {
-						Game::Util ().Log ("F5 released");
-						keyboard_key_released (63); //F5
+				case GameStates::HackPressF1:
+					Game::Util ().Log ("F1 pressed");
+					keyboard_key_pressed (59); //F1
 
-						mScreenCounter = 0;
-						mSpacePressed = false;
-						mState = GameStates::AfterHack;
-					}
+					mState = GameStates::HackPressF3;
+					break;
+				case GameStates::HackPressF3:
+					Game::Util ().Log ("F1 released, F3 pressed");
+					keyboard_key_released (59); //F1
+					keyboard_key_pressed (61); //F3
+
+					mState = GameStates::HackPressF5;
+					break;
+				case GameStates::HackPressF5:
+					Game::Util ().Log ("F3 released, F5 pressed");
+					keyboard_key_released (61); //F3
+					keyboard_key_pressed (63); //F5
+
+					mState = GameStates::HackPressSpace;
+					break;
+				case GameStates::HackPressSpace:
+					Game::Util ().Log ("F5 released, Space pressed");
+					keyboard_key_released (63); //F5
+					keyboard_key_pressed (57); //press space
+
+					mState = GameStates::HackReleaseSpace;
+					break;
+				case GameStates::HackReleaseSpace:
+					Game::Util ().Log ("Space released (After hack)");
+					keyboard_key_released (57); //release space
+
+					mState = GameStates::AfterHack;
 					break;
 				case GameStates::AfterHack:
-					if (mSpacePressed && mScreenCounter >= 1 && mScreenCounter <= 4) {
-						Game::Util ().Log ("Space released (After hack)");
-						keyboard_key_released (57); //release space
-					} else if (mScreenCounter > 4) {
-						keyboard_key_clear ();
+					keyboard_key_clear ();
 
-						mRedSum = mGreenSum = mBlueSum = 0;
-						mState = GameStates::Game;
-					}
+					mRedSum = mGreenSum = mBlueSum = 0;
+					mState = GameStates::Game;
 					break;
 				default:
 					break;
@@ -227,22 +227,6 @@ void GameScene::Update (float elapsedTime) {
 				mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &mC64Pixels[0]);
 			}
 			g_engine.canvas_dirty = false;
-		} else { //Nothing to draw
-			mDrawCounter = 0;
-			++mNoDrawCounter;
-
-			//Handle game state transitions during initialization (load process)
-			switch (mState) {
-				case GameStates::AfterHack:
-					if (!mSpacePressed && mNoDrawCounter >= 1 && mNoDrawCounter <= 3) {
-						Game::Util ().Log ("Space pressed (After hack)");
-						keyboard_key_pressed (57); //press space
-						mSpacePressed = mNoDrawCounter == 3;
-					}
-					break;
-				default:
-					break;
-			}
 		}
 	}
 
@@ -261,25 +245,26 @@ void GameScene::Update (float elapsedTime) {
 	//Handle reset
 	if (mIsResetInProgress) {
 		double currentTime = Game::Util ().GetTime ();
-		if (currentTime - mResetStartTime > 5) { //Hold fire button until 5 sec to reset machine...
+		if (!mIsResetStarted && currentTime - mResetStartTime > 5) { //Hold fire button until 5 sec to reset machine...
+			Game::Util ().Log ("Reset C64");
+
+			mIsResetStarted = true;
+
 			mButtonStates = (uint32_t) Buttons::None;
 			mButtonLastStates = (uint32_t) Buttons::None;
 			mButtonFingerIDs.clear ();
 
-			mScreenCounter = 0;
-			mDrawCounter = 0;
-			mNoDrawCounter = 0;
 			mRedSum = 0;
 			mGreenSum = 0;
 			mBlueSum = 0;
-			mSpacePressed = false;
 
 			mState = GameStates::Blue;
 
 			ui_quicksnapshot_remove ();
 
-			vsync_suspend_speed_eval ();
-			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
+//			vsync_suspend_speed_eval ();
+//			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
+
 			keyboard_key_clear ();
 
 			Game::ContentManager ().PausePCM ();
@@ -395,7 +380,7 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 }
 
 void GameScene::ConvertBGRADuringLoad () {
-//	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
 	assert (g_engine.visible_height <= g_engine.canvas_height);
 
@@ -437,7 +422,7 @@ void GameScene::ConvertBGRADuringLoad () {
 }
 
 void GameScene::ConvertBGRAInGame () {
-//	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
+	lock_guard <recursive_mutex> lock (g_engine.canvas_lock);
 
 	assert (g_engine.visible_height <= g_engine.canvas_height);
 
@@ -486,6 +471,7 @@ void GameScene::DestroyButtons () {
 	mIsResetInProgress = false;
 	mResetFingerID = -1;
 	mResetStartTime = 0;
+	mIsResetStarted = false;
 }
 
 void GameScene::CreateButton (bool isVerticalLayout, Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale,
@@ -672,6 +658,7 @@ void GameScene::HandleResetProgressStart (int fingerID, const Vector2D& pos) {
 		mIsResetInProgress = true;
 		mResetFingerID = fingerID;
 		mResetStartTime = Game::Util ().GetTime ();
+		mIsResetStarted = false;
 	}
 }
 
@@ -683,6 +670,7 @@ void GameScene::HandleResetProgressEnd (int fingerID) {
 		mIsResetInProgress = false;
 		mResetFingerID = -1;
 		mResetStartTime = 0;
+		mIsResetStarted = false;
 	}
 }
 
@@ -696,6 +684,7 @@ void GameScene::HandleResetProgressMove (int fingerID, const Vector2D& pos) {
 			mIsResetInProgress = false;
 			mResetFingerID = -1;
 			mResetStartTime = 0;
+			mIsResetStarted = false;
 		}
 	}
 }

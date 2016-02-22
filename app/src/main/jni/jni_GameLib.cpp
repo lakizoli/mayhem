@@ -62,12 +62,12 @@ static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint32_t v
 }
 
 static void LockCanvas () {
-//	g_engine.canvas_lock.lock ();
+	g_engine.canvas_lock.lock ();
 }
 
 static void UnlockCanvas () {
 	g_engine.canvas_dirty = true;
-//	g_engine.canvas_lock.unlock ();
+	g_engine.canvas_lock.unlock ();
 }
 
 static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
