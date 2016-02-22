@@ -35,6 +35,7 @@ void GameScene::Init (float width, float height) {
 	mRedSum = 0;
 	mGreenSum = 0;
 	mBlueSum = 0;
+	mSpacePressed = false;
 
 	mState = GameStates::Blue;
 
@@ -108,6 +109,7 @@ void GameScene::Update (float elapsedTime) {
 		mRedSum = 0;
 		mGreenSum = 0;
 		mBlueSum = 0;
+		mSpacePressed = false;
 
 		mState = GameStates::Blue;
 	}
@@ -149,14 +151,16 @@ void GameScene::Update (float elapsedTime) {
 					break;
 				case GameStates::AfterBlue:
 					if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
+						keyboard_key_clear ();
+
 						mScreenCounter = 0;
 						mState = GameStates::Demo;
 					}
 					break;
 				case GameStates::Demo:
-					if (mScreenCounter == 4) {
+					if (mScreenCounter >= 4 && mScreenCounter <= 6) {
 						keyboard_key_pressed (57); //press space on keyboard
-					} else if (mScreenCounter > 4) {
+					} else if (mScreenCounter > 6) {
 						keyboard_key_released (57); //release space on keyboard
 						mState = GameStates::AfterDemo;
 					}
@@ -169,6 +173,8 @@ void GameScene::Update (float elapsedTime) {
 					break;
 				case GameStates::BeforeHack:
 					if (mRedSum > 0 && mGreenSum > 0 && mBlueSum > 0) {
+						keyboard_key_clear ();
+
 						mScreenCounter = 0;
 						mState = GameStates::Hack;
 					}
@@ -184,14 +190,18 @@ void GameScene::Update (float elapsedTime) {
 						keyboard_key_pressed (63); //F5
 					} else if (mScreenCounter == 4) {
 						keyboard_key_released (63); //F5
+
 						mScreenCounter = 0;
+						mSpacePressed = false;
 						mState = GameStates::AfterHack;
 					}
 					break;
 				case GameStates::AfterHack:
-					if (mScreenCounter == 1) {
+					if (mSpacePressed && mScreenCounter >= 1 && mScreenCounter <= 4) {
 						keyboard_key_released (57); //release space
-					} else if (mScreenCounter > 1) {
+					} else if (mScreenCounter > 4) {
+						keyboard_key_clear ();
+
 						mRedSum = mGreenSum = mBlueSum = 0;
 						mState = GameStates::Game;
 					}
@@ -212,8 +222,9 @@ void GameScene::Update (float elapsedTime) {
 			//Handle game state transitions during initialization (load process)
 			switch (mState) {
 				case GameStates::AfterHack:
-					if (mNoDrawCounter == 3) {
+					if (!mSpacePressed && mNoDrawCounter >= 1 && mNoDrawCounter <= 3) {
 						keyboard_key_pressed (57); //press space
+						mSpacePressed = mNoDrawCounter == 3;
 					}
 					break;
 				default:
@@ -223,7 +234,7 @@ void GameScene::Update (float elapsedTime) {
 	}
 
 	//Handle input events
-	if (mState == GameStates::Game && mButtonStates != mButtonLastStates) {
+	if (mState == GameStates::Game /*&& mButtonStates != mButtonLastStates*/) {
 		HandleKeyStates (Buttons::Left);
 		HandleKeyStates (Buttons::Right);
 		HandleKeyStates (Buttons::Up);
@@ -231,7 +242,7 @@ void GameScene::Update (float elapsedTime) {
 		HandleKeyStates (Buttons::Fire);
 		HandleKeyStates (Buttons::C64);
 
-		mButtonLastStates = mButtonStates;
+		//mButtonLastStates = mButtonStates;
 	}
 
 	//Handle reset
@@ -248,6 +259,7 @@ void GameScene::Update (float elapsedTime) {
 			mRedSum = 0;
 			mGreenSum = 0;
 			mBlueSum = 0;
+			mSpacePressed = false;
 
 			mState = GameStates::Blue;
 
@@ -582,9 +594,9 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 }
 
 void GameScene::HandleKeyStates (Buttons button) {
-	if ((mButtonStates & (uint32_t)button) && !(mButtonLastStates & (uint32_t)button)) { //Button pressed
+	if ((mButtonStates & (uint32_t)button) /*&& !(mButtonLastStates & (uint32_t)button)*/) { //Button pressed
 		HandleKey (button, true);
-	} else if (!(mButtonStates & (uint32_t)button) && (mButtonLastStates & (uint32_t)button)) { //Button released
+	} else if (!(mButtonStates & (uint32_t)button) /*&& (mButtonLastStates & (uint32_t)button)*/) { //Button released
 		HandleKey (button, false);
 	}
 }

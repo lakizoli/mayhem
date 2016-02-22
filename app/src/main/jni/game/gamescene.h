@@ -46,6 +46,7 @@ private:
 	uint32_t mRedSum;
 	uint32_t mGreenSum;
 	uint32_t mBlueSum;
+	bool mSpacePressed;
 
 	GameStates mState;
 
