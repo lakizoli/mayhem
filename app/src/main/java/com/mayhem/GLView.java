@@ -283,7 +283,7 @@ class GLView extends GLSurfaceView {
 			mEmulatorThread = emulatorThread;
 		}
 
-		public void onDrawFrame (GL10 gl) {
+		public synchronized void onDrawFrame (GL10 gl) {
 			GameLib.step ();
 		}
 
