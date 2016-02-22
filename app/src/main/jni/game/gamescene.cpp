@@ -47,6 +47,7 @@ void GameScene::Init (float width, float height) {
 	mResetFingerID = -1;
 	mResetStartTime = 0;
 	mIsResetStarted = false;
+	mIsAutoStartInited =false;
 }
 
 void GameScene::Shutdown () {
@@ -129,7 +130,13 @@ void GameScene::Update (float elapsedTime) {
 			//Handle game state transitions during initialization (C64 load process)
 			switch (mState) {
 				case GameStates::Blue:
-					if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
+					if (mIsResetInProgress && mIsResetStarted) {
+						if (!mIsAutoStartInited) {
+							mIsAutoStartInited = true;
+							Game::Util ().Log ("Auto starting disk image");
+							autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
+						}
+					} else if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
 						mState = GameStates::AfterBlue;
 
 						//Try to load snapshot
@@ -249,6 +256,7 @@ void GameScene::Update (float elapsedTime) {
 			Game::Util ().Log ("Reset C64");
 
 			mIsResetStarted = true;
+			mIsAutoStartInited = false;
 
 			mButtonStates = (uint32_t) Buttons::None;
 			mButtonLastStates = (uint32_t) Buttons::None;
@@ -262,14 +270,12 @@ void GameScene::Update (float elapsedTime) {
 
 			ui_quicksnapshot_remove ();
 
-//			vsync_suspend_speed_eval ();
-//			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
+			vsync_suspend_speed_eval ();
+			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
 
 			keyboard_key_clear ();
 
 			Game::ContentManager ().PausePCM ();
-
-			autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
 		}
 	}
 }
@@ -653,12 +659,13 @@ void GameScene::HandleResetProgressStart (int fingerID, const Vector2D& pos) {
 	if (mIsResetInProgress)
 		return;
 
-	auto it = mButtons.find (Buttons::Fire);
+	auto it = mButtons.find (Buttons::C64);
 	if (it != mButtons.end () && it->second && it->second->TransformedBoundingBox ().Contains (pos)) {
 		mIsResetInProgress = true;
 		mResetFingerID = fingerID;
 		mResetStartTime = Game::Util ().GetTime ();
 		mIsResetStarted = false;
+		mIsAutoStartInited = false;
 	}
 }
 
@@ -671,6 +678,7 @@ void GameScene::HandleResetProgressEnd (int fingerID) {
 		mResetFingerID = -1;
 		mResetStartTime = 0;
 		mIsResetStarted = false;
+		mIsAutoStartInited = false;
 	}
 }
 
@@ -679,12 +687,13 @@ void GameScene::HandleResetProgressMove (int fingerID, const Vector2D& pos) {
 		return;
 
 	if (fingerID == mResetFingerID) {
-		auto it = mButtons.find (Buttons::Fire);
+		auto it = mButtons.find (Buttons::C64);
 		if (it != mButtons.end () && it->second && !it->second->TransformedBoundingBox ().Contains (pos)) {
 			mIsResetInProgress = false;
 			mResetFingerID = -1;
 			mResetStartTime = 0;
 			mIsResetStarted = false;
+			mIsAutoStartInited = false;
 		}
 	}
 }

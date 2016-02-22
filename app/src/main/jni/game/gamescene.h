@@ -67,6 +67,7 @@ private:
 	int mResetFingerID;
 	double mResetStartTime;
 	bool mIsResetStarted;
+	bool mIsAutoStartInited;
 
 //Construction
 public:
