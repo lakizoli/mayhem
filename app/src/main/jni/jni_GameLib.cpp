@@ -14,6 +14,9 @@ extern "C" void ui_pause_emulation(void);
 extern "C" void ui_continue_emulation(void);
 extern "C" int ui_emulation_is_paused(void);
 
+typedef void (*t_fn_ui_event_callback)(void);
+extern "C" void ui_android_init_callbacks (t_fn_ui_event_callback eventCallback);
+
 //Video callbacks
 typedef int (*t_fn_init_canvas) (uint32_t width, uint32_t height, uint32_t bpp, uint32_t visible_width, uint32_t visible_height, uint8_t** buffer, uint32_t* pitch);
 extern "C" void video_android_set_init_callback (t_fn_init_canvas init_canvas);
@@ -36,6 +39,29 @@ extern "C" void sound_android_set_pcm_callbacks (t_fn_sound_init sound_init, t_f
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 engine_s g_engine; ///< The one and only global object of the game!
 
+static void UIEventCallback () {
+	//Try to set run_game flag to true (only if the value was false before!)
+	while (true) {
+		lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+		if (!g_engine.run_game) {
+//			LOGD ("enter UI callback");
+			g_engine.run_game = true;
+			break;
+		}
+	}
+
+	//... Here runs the overlay game code ...
+
+	//Wait until run_game flag will be false again
+	while (true) {
+		lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+		if (!g_engine.run_game) {
+//			LOGD ("quit UI callback");
+			break;
+		}
+	}
+}
+
 static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint32_t visible_width, uint32_t visible_height, uint8_t** buffer, uint32_t* pitch) {
 	CHECKMSG (buffer != nullptr, "InitCanvas () - buffer cannot be nullptr!");
 	CHECKMSG (pitch != nullptr, "InitCanvas () - pitch cannot be nullptr!");
@@ -56,6 +82,7 @@ static int InitCanvas (uint32_t width, uint32_t height, uint32_t bpp, uint32_t v
 	*buffer = &g_engine.canvas[0];
 
 	g_engine.canvas_dirty = false;
+	g_engine.run_game = false;
 
 	g_engine.canvas_inited = true;
 	return 0;
@@ -135,6 +162,23 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* 
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
+	//Wait until the run_game flag will be true (but we don't block the android GLView!!)
+	{
+		lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+		if (!g_engine.run_game)
+			return;
+	}
+
+//	LOGD ("UI callback started");
+
+	//At the end we need to set the run_game flag to false
+	struct s_unlock {
+		~s_unlock () {
+			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+			g_engine.run_game = false;
+		}
+	} autoUnlock;
+
 	//Get current time
 	timespec now;
 	clock_gettime (CLOCK_MONOTONIC, &now);
@@ -266,6 +310,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	}
 
 	//Set callbacks of engine
+	ui_android_init_callbacks (&UIEventCallback);
 	video_android_set_init_callback (&InitCanvas);
 	video_android_set_locking_callbacks (&LockCanvas, &UnlockCanvas);
 	vsyncarch_android_set_speed_callback (&DisplaySpeed);

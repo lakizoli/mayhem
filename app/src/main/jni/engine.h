@@ -32,4 +32,8 @@ struct engine_s {
 
 	vector<uint8_t> canvas; //screen pixels in BGR format
 	volatile bool canvas_dirty;
+
+	//Emulator syncronization data
+	recursive_mutex vsync_lock;
+	volatile bool run_game;
 };
