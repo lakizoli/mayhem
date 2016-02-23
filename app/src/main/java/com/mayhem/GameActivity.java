@@ -8,7 +8,12 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -16,6 +21,9 @@ import java.io.FileOutputStream;
 public class GameActivity extends Activity {
 	GLView mView;
 	Thread mEmulatorThread;
+
+	FrameLayout mAdFrameLayout;
+	AdView mAdView;
 
 	TextView mStatusLine;
 
@@ -43,30 +51,29 @@ public class GameActivity extends Activity {
 		ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams (ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		addContentView (overlayView, layoutParams);
 
+		mAdFrameLayout = (FrameLayout) findViewById (R.id.game_adframe);
 		mStatusLine = (TextView) findViewById (R.id.status_text);
-
-		//Setup game overlays
 
 		//Setup adMob overlay
 		if (isLite ()) {
-//			_adView = new AdView(this);
-//			_adView.setAdUnitId("ca-app-pub-9778250992563662/1847669238"); //zlaki.games@gmail.com - Ball Fall Top Banner
-//			if (isTablet()) {
-//				_adView.setAdSize(AdSize.LEADERBOARD);
-//			} else {
-//				_adView.setAdSize(AdSize.BANNER);
-//			}
-//
-//			AdRequest adRequest = new AdRequest.Builder()
-//					//.addTestDevice("54F567A97CA221C8AF6DC24725DD98A9") //Nexus 6 phone
-//					//.addTestDevice("657B606D88C7789A95533151364832AC") //Nexus 9 tablet
-//					.build();
-//			_adView.loadAd(adRequest);
+			int screenSize = getResources ().getConfiguration ().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+			boolean isTablet = screenSize >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+
+			mAdView = new AdView (this);
+			mAdView.setAdUnitId ("ca-app-pub-9778250992563662/3524377634"); //zlaki.games@gmail.com - Mayhem In Monsterland Top Banner
+			mAdView.setAdSize (isTablet ? AdSize.LEADERBOARD : AdSize.BANNER);
+			mAdFrameLayout.addView (mAdView);
+
+			AdRequest adRequest = new AdRequest.Builder ()
+					.addTestDevice ("54F567A97CA221C8AF6DC24725DD98A9") //Nexus 6 phone
+					.addTestDevice ("657B606D88C7789A95533151364832AC") //Nexus 9 tablet
+					.build ();
+			mAdView.loadAd (adRequest);
 		}
 
 		//Init Game Environment
 		if (!GameLib.initEnvironment (getApplication ())) {
-			//TODO: ... valami alert, mert nem tudunk elindulni ...
+			// ... valami alert kellhet, mert nem tudunk elindulni ...
 			return;
 		}
 	}
