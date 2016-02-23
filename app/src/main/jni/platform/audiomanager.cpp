@@ -572,7 +572,7 @@ void SLAPIENTRY AudioManager::QueueCallback (SLAndroidSimpleBufferQueueItf queue
 	CHECKMSG (player != nullptr, "AudioManager::QueueCallback () - player cannot be nullptr!");
 
 	player->bufferIndex = (player->bufferIndex + 1) % 2;
-	LOGI ("starting to play buffer! index: %d", player->bufferIndex);
+//	LOGI ("starting to play buffer! index: %d", player->bufferIndex);
 
 	shared_ptr<PCMSample> sample = man->mPCMs[player->bufferIndex];
 	CHECKMSG (sample != nullptr, "AudioManager::QueueCallback () - sample cannot be nullptr!");

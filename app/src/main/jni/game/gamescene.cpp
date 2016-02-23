@@ -147,6 +147,8 @@ void GameScene::Update (float elapsedTime) {
 						if (snapshot_loaded) {
 							resources_set_int ("WarpMode", 0);
 
+							Game::ContentManager ().PausePCM (true);
+
 							mRedSum = mGreenSum = mBlueSum = 0;
 							mState = GameStates::Game;
 						}
