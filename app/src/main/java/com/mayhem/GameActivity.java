@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +54,8 @@ public class GameActivity extends Activity {
 
 		mAdFrameLayout = (FrameLayout) findViewById (R.id.game_adframe);
 		mStatusLine = (TextView) findViewById (R.id.status_text);
+
+		hideSystemUI ();
 
 		//Setup adMob overlay
 		if (isLite ()) {
@@ -174,41 +177,55 @@ public class GameActivity extends Activity {
 	//endregion
 
 	//region Hiding and showing navigation buttons
-	// This snippet hides the system bars.
+	/**
+	 * This snippet hides the system bars.
+	 */
 	private void hideSystemUI () {
 		// Set the IMMERSIVE flag.
 		// Set the content to appear under the system bars so that the content
 		// doesn't resize when the system bars hide and show.
-		mView.setSystemUiVisibility (
-				View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-						| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-						| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-						| View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-						| View.SYSTEM_UI_FLAG_IMMERSIVE);
+		if (Build.VERSION.SDK_INT >= 16) {
+			int visibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+				| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+				| View.SYSTEM_UI_FLAG_FULLSCREEN; // hide status bar
+
+			if (Build.VERSION.SDK_INT >= 19)
+				visibility |= View.SYSTEM_UI_FLAG_IMMERSIVE;
+
+			mView.setSystemUiVisibility (visibility);
+		}
 	}
 
-	// This snippet shows the system bars. It does this by removing all the flags
-	// except for the ones that make the content appear under the system bars.
+	/**
+	 * This snippet shows the system bars. It does this by removing all the flags
+	 * except for the ones that make the content appear under the system bars.
+	 */
 	private void showSystemUI () {
-		mView.setSystemUiVisibility (
-				View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-						| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+		if (Build.VERSION.SDK_INT >= 16) {
+			mView.setSystemUiVisibility (
+					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+							| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+		}
 	}
 
 	@Override
 	public void onWindowFocusChanged (boolean hasFocus) {
 		super.onWindowFocusChanged (hasFocus);
-//		if (hasFocus) {
-//			mView.setSystemUiVisibility (
-//					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-//							| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-//							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-//							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-//							| View.SYSTEM_UI_FLAG_FULLSCREEN
-//							| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-//		}
+		if (Build.VERSION.SDK_INT >= 16 && hasFocus) {
+			int visibility =  View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+				| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+				| View.SYSTEM_UI_FLAG_FULLSCREEN;
+
+			if (Build.VERSION.SDK_INT >= 19)
+				visibility |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+
+			mView.setSystemUiVisibility (visibility);
+		}
 	}
 	//endregion
 }
