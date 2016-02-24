@@ -84,8 +84,6 @@ void GameScene::Resize (float oldWidth, float oldHeight, float newWidth, float n
 		InitVerticalLayout (true);
 	else
 		InitHorizontalLayout (true);
-
-	Game::ContentManager ().PausePCM (true);
 }
 
 void GameScene::Update (float elapsedTime) {
