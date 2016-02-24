@@ -112,9 +112,11 @@ static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
 	if (fps != last_fps) {
 		last_fps = fps;
 
+#ifndef PRODUCTION_VERSION
 		stringstream ss;
 		ss << "FPS: " << fps;
 		Game::ContentManager ().DisplayStatus (ss.str ());
+#endif //PRODUCTION_VERSION
 	}
 }
 

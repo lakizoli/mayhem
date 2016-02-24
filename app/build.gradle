@@ -330,8 +330,8 @@ task ndkBuildAllRelease(type: Exec) {
     nativeConfig.postProcessGame(projectDir, "release")
     nativeConfig.buildCommand(project.rootProject, 'src/main', "all", "release", "jni"
             , nativeConfig.preProcess, nativeConfig.postProcess
-            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -O3"
-            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -O3")
+            , "GAME_CFLAGS=-DIDE_COMPILE -DNDEBUG -DPRODUCTION_VERSION -D_FULL_VERSION -O3"
+            , "GAME_CPPFLAGS=-DIDE_COMPILE -DNDEBUG -DPRODUCTION_VERSION -D_FULL_VERSION -O3") //_FULL_VERSION == lite version, FULL_VERSION == full version without ads!
     commandLine Eval.me(nativeConfig.command)
 }
 

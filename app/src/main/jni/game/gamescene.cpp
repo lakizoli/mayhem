@@ -23,6 +23,9 @@ extern "C" void ui_quicksnapshot_remove ();
 extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
+//TODO: forgatas hangjanak javitasa
+//TODO: warp mode bekapcsolasa a betoltes kozben...
+
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
 	mBackground.reset ();
@@ -81,6 +84,8 @@ void GameScene::Resize (float oldWidth, float oldHeight, float newWidth, float n
 		InitVerticalLayout (true);
 	else
 		InitHorizontalLayout (true);
+
+	Game::ContentManager ().PausePCM (true);
 }
 
 void GameScene::Update (float elapsedTime) {
@@ -108,7 +113,7 @@ void GameScene::Update (float elapsedTime) {
 
 	//Update C64 screen texture
 	if (mC64Screen) {
-		if (g_engine.canvas_dirty) { //Something changed on the screen, so we need to refresh the texture
+		if (g_engine.canvas_dirty || IsDirtyState ()) { //Something changed on the screen, so we need to refresh the texture
 //			Game::Util ().Log ("dirty");
 
 			mRedSum = 0;
@@ -136,17 +141,22 @@ void GameScene::Update (float elapsedTime) {
 		}
 	}
 
-	//Handle input events
-	if (mState == GameStates::Game /*&& mButtonStates != mButtonLastStates*/) {
-		HandleKeyStates (Buttons::Left);
-		HandleKeyStates (Buttons::Right);
-		HandleKeyStates (Buttons::Up);
-		HandleKeyStates (Buttons::Down);
-		HandleKeyStates (Buttons::Fire);
-		HandleKeyStates (Buttons::C64);
+	//Tweek input events
+//	if (mState == GameStates::Game && mButtonStates == (uint32_t) Buttons::None) {
+//		Game::Util ().Log ("clear keys...");
+//		keyboard_key_clear ();
+//	}
 
-		//mButtonLastStates = mButtonStates;
-	}
+//	if (mState == GameStates::Game && mButtonStates != mButtonLastStates) {
+//		HandleKeyStates (Buttons::Left);
+//		HandleKeyStates (Buttons::Right);
+//		HandleKeyStates (Buttons::Up);
+//		HandleKeyStates (Buttons::Down);
+//		HandleKeyStates (Buttons::Fire);
+//		HandleKeyStates (Buttons::C64);
+//
+//		mButtonLastStates = mButtonStates;
+//	}
 
 	//Handle reset
 	if (mIsResetInProgress) {
@@ -351,6 +361,17 @@ void GameScene::ConvertBGRAInGame () {
 	}
 }
 
+bool GameScene::IsDirtyState () const {
+	return mState == GameStates::HackPressF1 ||
+		mState == GameStates::HackReleaseF1 ||
+		mState == GameStates::HackPressF3 ||
+		mState == GameStates::HackReleaseF3 ||
+		mState == GameStates::HackPressF5 ||
+		mState == GameStates::HackReleaseF5 ||
+		mState == GameStates::HackPressSpace ||
+		mState == GameStates::HackReleaseSpace;
+}
+
 void GameScene::ExecStateTransitions () {
 	switch (mState) {
 		case GameStates::Blue:
@@ -358,7 +379,7 @@ void GameScene::ExecStateTransitions () {
 				if (!mIsAutoStartInited) {
 					mIsAutoStartInited = true;
 
-//					Game::Util ().Log ("Auto starting disk image");
+					Game::Util ().Log ("Auto starting disk image");
 					autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
 
 					Game::ContentManager ().PausePCM (true);
@@ -409,35 +430,52 @@ void GameScene::ExecStateTransitions () {
 			}
 			break;
 		case GameStates::BeforeHack:
-			if (mRedSum > 0 && mGreenSum > 0 && mBlueSum > 0) {
+			if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
 				keyboard_key_clear ();
 
 				mState = GameStates::HackPressF1;
 			}
 			break;
 		case GameStates::HackPressF1:
-//			Game::Util ().Log ("F1 pressed");
-			keyboard_key_pressed (59); //F1
+			if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
+//				Game::Util ().Log ("F1 pressed");
+				keyboard_key_pressed (59); //F1
+
+				mState = GameStates::HackReleaseF1;
+			}
+			break;
+		case GameStates::HackReleaseF1:
+//			Game::Util ().Log ("F1 released");
+			keyboard_key_released (59); //F1
 
 			mState = GameStates::HackPressF3;
 			break;
 		case GameStates::HackPressF3:
-//			Game::Util ().Log ("F1 released, F3 pressed");
-			keyboard_key_released (59); //F1
+//			Game::Util ().Log ("F3 pressed");
 			keyboard_key_pressed (61); //F3
+
+			mState = GameStates::HackReleaseF3;
+			break;
+		case GameStates::HackReleaseF3:
+//			Game::Util ().Log ("F3 released");
+			keyboard_key_released (61); //F3
 
 			mState = GameStates::HackPressF5;
 			break;
 		case GameStates::HackPressF5:
-//			Game::Util ().Log ("F3 released, F5 pressed");
-			keyboard_key_released (61); //F3
+//			Game::Util ().Log ("F5 pressed");
 			keyboard_key_pressed (63); //F5
+
+			mState = GameStates::HackReleaseF5;
+			break;
+		case GameStates::HackReleaseF5:
+//			Game::Util ().Log ("F5 released");
+			keyboard_key_released (63); //F5
 
 			mState = GameStates::HackPressSpace;
 			break;
 		case GameStates::HackPressSpace:
-//			Game::Util ().Log ("F5 released, Space pressed");
-			keyboard_key_released (63); //F5
+//			Game::Util ().Log ("Space pressed (After hack)");
 			keyboard_key_pressed (57); //press space
 
 			mState = GameStates::HackReleaseSpace;

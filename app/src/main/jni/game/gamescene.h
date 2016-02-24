@@ -19,8 +19,11 @@ private:
 		AfterDemo, ///< After the demo screen -> We pushed space on the demo screen
 		BeforeHack, ///< The state before hack screen -> all component sum is 0
 		HackPressF1, ///< Hack screen -> We need to turn on unlimited capabilities... (F1 press)
+		HackReleaseF1, ///< Hack screen -> We need to turn on unlimited capabilities... (F1 release)
 		HackPressF3, ///< Hack screen -> We need to turn on unlimited capabilities... (F3 press)
+		HackReleaseF3, ///< Hack screen -> We need to turn on unlimited capabilities... (F3 release)
 		HackPressF5, ///< Hack screen -> We need to turn on unlimited capabilities... (F5 press)
+		HackReleaseF5, ///< Hack screen -> We need to turn on unlimited capabilities... (F5 release)
 		HackPressSpace, ///< Hack screen -> We need to turn on unlimited capabilities... (Space press)
 		HackReleaseSpace, ///< Hack screen -> We need to turn on unlimited capabilities... (Space release)
 		AfterHack, ///< After the hack screen -> We turned the unlimited capabilities...
@@ -97,6 +100,7 @@ private:
 	void ConvertBGRADuringLoad ();
 	void ConvertBGRAInGame ();
 
+	bool IsDirtyState () const;
 	void ExecStateTransitions ();
 
 	void DestroyButtons ();
