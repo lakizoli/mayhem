@@ -164,6 +164,8 @@ void GameScene::Update (float elapsedTime) {
 		if (!mIsResetStarted && currentTime - mResetStartTime > 5) { //Hold fire button until 5 sec to reset machine...
 			Game::Util ().Log ("Reset C64");
 
+			g_engine.is_warp = true;
+
 			mIsResetStarted = true;
 			mIsAutoStartInited = false;
 

@@ -39,6 +39,27 @@ extern "C" void sound_android_set_pcm_callbacks (t_fn_sound_init sound_init, t_f
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 engine_s g_engine; ///< The one and only global object of the game!
 
+struct s_auto_vsync_lock {
+	s_auto_vsync_lock () {
+		while (!g_engine.is_warp) {
+			{
+				lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+				if (g_engine.run_game)
+					break;
+			}
+
+			sched_yield ();
+		}
+	}
+
+	~s_auto_vsync_lock () {
+		if (!g_engine.is_warp) {
+			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+			g_engine.run_game = false;
+		}
+	}
+};
+
 static void UIEventCallback () {
 	//Try to set run_game flag to true (only if the value was false before!)
 	while (!g_engine.is_warp) {
@@ -173,28 +194,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* 
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
-	//Wait until the run_game flag will be true (but we don't block the android GLView!!)
-	while (!g_engine.is_warp) {
-		{
-			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
-			if (g_engine.run_game)
-				break;
-		}
-
-		sched_yield ();
-	}
-
+	//Sync game to vsync, when not in warp mode
+	s_auto_vsync_lock autoVsyncLock;
 //	LOGD ("UI callback started");
-
-	//At the end we need to set the run_game flag to false
-	struct s_unlock {
-		~s_unlock () {
-			if (!g_engine.is_warp) {
-				lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
-				g_engine.run_game = false;
-			}
-		}
-	} autoUnlock;
 
 	//Get current time
 	timespec now;
@@ -246,6 +248,10 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isPaused (JNIEnv* 
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resize (JNIEnv* env, jclass clazz, jint newScreenWidth, jint newScreenHeight) {
+	//Sync game to vsync, when not in warp mode
+	s_auto_vsync_lock autoVsyncLock;
+//	LOGD ("resize run");
+
 	glViewport (0, 0, newScreenWidth, newScreenHeight);
 
 	if (g_engine.game)
