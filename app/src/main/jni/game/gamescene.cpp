@@ -23,8 +23,8 @@ extern "C" void ui_quicksnapshot_remove ();
 extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
+//TODO: release-ben a hack megjavitasa (mert debug-ban jonak tunik...)
 //TODO: forgatas hangjanak javitasa
-//TODO: warp mode bekapcsolasa a betoltes kozben...
 
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
@@ -390,6 +390,7 @@ void GameScene::ExecStateTransitions () {
 			break;
 		case GameStates::AfterBlue:
 			if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
+				g_engine.is_warp = false;
 				resources_set_int ("WarpMode", 0);
 				keyboard_key_clear ();
 
@@ -398,6 +399,7 @@ void GameScene::ExecStateTransitions () {
 				//Try to load snapshot
 				int snapshot_loaded = ui_quicksnapshot_load ();
 				if (snapshot_loaded) {
+					g_engine.is_warp = false;
 					resources_set_int ("WarpMode", 0);
 
 					Game::ContentManager ().PausePCM (true);

@@ -12,6 +12,7 @@ struct engine_s {
 	unique_ptr<set<int32_t>> pointerIDs;
 	double lastUpdateTime;
 
+	volatile bool is_warp;
 	volatile bool is_paused;
 
 	//Emulator parameter data

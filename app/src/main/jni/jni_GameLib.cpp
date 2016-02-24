@@ -41,7 +41,7 @@ engine_s g_engine; ///< The one and only global object of the game!
 
 static void UIEventCallback () {
 	//Try to set run_game flag to true (only if the value was false before!)
-	while (true) {
+	while (!g_engine.is_warp) {
 		{
 			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
 			if (!g_engine.run_game) {
@@ -57,7 +57,7 @@ static void UIEventCallback () {
 	//... Here runs the overlay game code ...
 
 	//Wait until run_game flag will be false again
-	while (true) {
+	while (!g_engine.is_warp) {
 		{
 			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
 			if (!g_engine.run_game) {
@@ -151,6 +151,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 	}
 
 	g_engine.lastUpdateTime = -1;
+	g_engine.is_warp = true;
 	g_engine.is_paused = false;
 
 	g_engine.canvas_inited = false;
@@ -173,7 +174,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* 
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
 	//Wait until the run_game flag will be true (but we don't block the android GLView!!)
-	while (true) {
+	while (!g_engine.is_warp) {
 		{
 			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
 			if (g_engine.run_game)
@@ -188,8 +189,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 	//At the end we need to set the run_game flag to false
 	struct s_unlock {
 		~s_unlock () {
-			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
-			g_engine.run_game = false;
+			if (!g_engine.is_warp) {
+				lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+				g_engine.run_game = false;
+			}
 		}
 	} autoUnlock;
 
