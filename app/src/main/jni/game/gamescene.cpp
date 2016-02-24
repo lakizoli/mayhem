@@ -23,8 +23,6 @@ extern "C" void ui_quicksnapshot_remove ();
 extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
-//TODO: reklam elhelyezese a jatekban
-
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
 	mBackground.reset ();
@@ -128,111 +126,7 @@ void GameScene::Update (float elapsedTime) {
 //			Game::Util ().Log (ss.str ());
 
 			//Handle game state transitions during initialization (C64 load process)
-			switch (mState) {
-				case GameStates::Blue:
-					if (mIsResetInProgress && mIsResetStarted) {
-						if (!mIsAutoStartInited) {
-							mIsAutoStartInited = true;
-
-							Game::Util ().Log ("Auto starting disk image");
-							autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
-
-							Game::ContentManager ().PausePCM (true);
-						}
-					} else if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
-						mState = GameStates::AfterBlue;
-
-						//Try to load snapshot
-						int snapshot_loaded = ui_quicksnapshot_load ();
-						if (snapshot_loaded) {
-							resources_set_int ("WarpMode", 0);
-
-							Game::ContentManager ().PausePCM (true);
-
-							mRedSum = mGreenSum = mBlueSum = 0;
-							mState = GameStates::Game;
-						}
-					}
-					break;
-				case GameStates::AfterBlue:
-					if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
-						resources_set_int ("WarpMode", 0);
-						keyboard_key_clear ();
-
-						mState = GameStates::DemoPressSpace;
-					}
-					break;
-				case GameStates::DemoPressSpace:
-					if (mRedSum > 5000000 && mGreenSum > 5000000 && mBlueSum > 5000000) {
-						Game::Util ().Log ("Space pressed (Demo)");
-						keyboard_key_pressed (57); //press space on keyboard
-
-						mState = GameStates::DemoReleaseSpace;
-					}
-					break;
-				case GameStates::DemoReleaseSpace:
-					Game::Util ().Log ("Space pressed (Released)");
-					keyboard_key_released (57); //release space on keyboard
-
-					mState = GameStates::AfterDemo;
-					break;
-				case GameStates::AfterDemo:
-					if (mRedSum == 0 && mGreenSum == 0 && mBlueSum == 0) {
-						mState = GameStates::BeforeHack;
-					} else {
-						Game::Util ().Log ("Space pressed (After demo)");
-						keyboard_key_pressed (57); //press space on keyboard
-					}
-					break;
-				case GameStates::BeforeHack:
-					if (mRedSum > 0 && mGreenSum > 0 && mBlueSum > 0) {
-						keyboard_key_clear ();
-
-						mState = GameStates::HackPressF1;
-					}
-					break;
-				case GameStates::HackPressF1:
-					Game::Util ().Log ("F1 pressed");
-					keyboard_key_pressed (59); //F1
-
-					mState = GameStates::HackPressF3;
-					break;
-				case GameStates::HackPressF3:
-					Game::Util ().Log ("F1 released, F3 pressed");
-					keyboard_key_released (59); //F1
-					keyboard_key_pressed (61); //F3
-
-					mState = GameStates::HackPressF5;
-					break;
-				case GameStates::HackPressF5:
-					Game::Util ().Log ("F3 released, F5 pressed");
-					keyboard_key_released (61); //F3
-					keyboard_key_pressed (63); //F5
-
-					mState = GameStates::HackPressSpace;
-					break;
-				case GameStates::HackPressSpace:
-					Game::Util ().Log ("F5 released, Space pressed");
-					keyboard_key_released (63); //F5
-					keyboard_key_pressed (57); //press space
-
-					mState = GameStates::HackReleaseSpace;
-					break;
-				case GameStates::HackReleaseSpace:
-					Game::Util ().Log ("Space released (After hack)");
-					keyboard_key_released (57); //release space
-
-					mState = GameStates::AfterHack;
-					break;
-				case GameStates::AfterHack:
-					keyboard_key_clear ();
-
-					mRedSum = mGreenSum = mBlueSum = 0;
-					mState = GameStates::Game;
-					break;
-				default:
-					break;
-			}
+			ExecStateTransitions ();
 
 			//Draw the screen of the game
 			/*if (mState == GameStates::Game)*/ {
@@ -326,7 +220,6 @@ void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
 				mButtonFingerIDs[fingerID] = it->first;
 
 				HandleKey (it->first, true);
-				break;
 			}
 		}
 	}
@@ -345,7 +238,6 @@ void GameScene::TouchUp (int fingerID, const Vector2D& pos) {
 
 				mButtonStates &= !((uint32_t) it->first);
 				mButtonFingerIDs.erase (fingerID);
-				break;
 			}
 		}
 	}
@@ -379,7 +271,6 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 				mButtonFingerIDs[fingerID] = it->first;
 
 				HandleKey (it->first, true);
-				break;
 			}
 		}
 	}
@@ -457,6 +348,114 @@ void GameScene::ConvertBGRAInGame () {
 			src = *src_pixel++;
 			*dst_pixel++ = (src & 0x00FF000000FF0000ull) >> 16 | (src & 0x0000FF000000FF00ull) | (src & 0x000000FF000000FFull) << 16 | 0xFF000000FF000000;
 		}
+	}
+}
+
+void GameScene::ExecStateTransitions () {
+	switch (mState) {
+		case GameStates::Blue:
+			if (mIsResetInProgress && mIsResetStarted) {
+				if (!mIsAutoStartInited) {
+					mIsAutoStartInited = true;
+
+//					Game::Util ().Log ("Auto starting disk image");
+					autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
+
+					Game::ContentManager ().PausePCM (true);
+				}
+			} else if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
+				mState = GameStates::AfterBlue;
+			}
+			break;
+		case GameStates::AfterBlue:
+			if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
+				resources_set_int ("WarpMode", 0);
+				keyboard_key_clear ();
+
+				mState = GameStates::DemoPressSpace;
+			} else {
+				//Try to load snapshot
+				int snapshot_loaded = ui_quicksnapshot_load ();
+				if (snapshot_loaded) {
+					resources_set_int ("WarpMode", 0);
+
+					Game::ContentManager ().PausePCM (true);
+
+					mRedSum = mGreenSum = mBlueSum = 0;
+					mState = GameStates::Game;
+				}
+			}
+			break;
+		case GameStates::DemoPressSpace:
+			if (mRedSum > 5000000 && mGreenSum > 5000000 && mBlueSum > 5000000) {
+//				Game::Util ().Log ("Space pressed (Demo)");
+				keyboard_key_pressed (57); //press space on keyboard
+
+				mState = GameStates::DemoReleaseSpace;
+			}
+			break;
+		case GameStates::DemoReleaseSpace:
+//			Game::Util ().Log ("Space pressed (Released)");
+			keyboard_key_released (57); //release space on keyboard
+
+			mState = GameStates::AfterDemo;
+			break;
+		case GameStates::AfterDemo:
+			if (mRedSum == 0 && mGreenSum == 0 && mBlueSum == 0) {
+				mState = GameStates::BeforeHack;
+			} else {
+//				Game::Util ().Log ("Space pressed (After demo)");
+				keyboard_key_pressed (57); //press space on keyboard
+			}
+			break;
+		case GameStates::BeforeHack:
+			if (mRedSum > 0 && mGreenSum > 0 && mBlueSum > 0) {
+				keyboard_key_clear ();
+
+				mState = GameStates::HackPressF1;
+			}
+			break;
+		case GameStates::HackPressF1:
+//			Game::Util ().Log ("F1 pressed");
+			keyboard_key_pressed (59); //F1
+
+			mState = GameStates::HackPressF3;
+			break;
+		case GameStates::HackPressF3:
+//			Game::Util ().Log ("F1 released, F3 pressed");
+			keyboard_key_released (59); //F1
+			keyboard_key_pressed (61); //F3
+
+			mState = GameStates::HackPressF5;
+			break;
+		case GameStates::HackPressF5:
+//			Game::Util ().Log ("F3 released, F5 pressed");
+			keyboard_key_released (61); //F3
+			keyboard_key_pressed (63); //F5
+
+			mState = GameStates::HackPressSpace;
+			break;
+		case GameStates::HackPressSpace:
+//			Game::Util ().Log ("F5 released, Space pressed");
+			keyboard_key_released (63); //F5
+			keyboard_key_pressed (57); //press space
+
+			mState = GameStates::HackReleaseSpace;
+			break;
+		case GameStates::HackReleaseSpace:
+//			Game::Util ().Log ("Space released (After hack)");
+			keyboard_key_released (57); //release space
+
+			mState = GameStates::AfterHack;
+			break;
+		case GameStates::AfterHack:
+			keyboard_key_clear ();
+
+			mRedSum = mGreenSum = mBlueSum = 0;
+			mState = GameStates::Game;
+			break;
+		default:
+			break;
 	}
 }
 

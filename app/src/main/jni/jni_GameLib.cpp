@@ -42,23 +42,31 @@ engine_s g_engine; ///< The one and only global object of the game!
 static void UIEventCallback () {
 	//Try to set run_game flag to true (only if the value was false before!)
 	while (true) {
-		lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
-		if (!g_engine.run_game) {
-//			LOGD ("enter UI callback");
-			g_engine.run_game = true;
-			break;
+		{
+			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+			if (!g_engine.run_game) {
+//				LOGD ("enter UI callback");
+				g_engine.run_game = true;
+				break;
+			}
 		}
+
+		sched_yield ();
 	}
 
 	//... Here runs the overlay game code ...
 
 	//Wait until run_game flag will be false again
 	while (true) {
-		lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
-		if (!g_engine.run_game) {
-//			LOGD ("quit UI callback");
-			break;
+		{
+			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+			if (!g_engine.run_game) {
+//				LOGD ("quit UI callback");
+				break;
+			}
 		}
+
+		sched_yield ();
 	}
 }
 
@@ -163,10 +171,14 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* 
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
 	//Wait until the run_game flag will be true (but we don't block the android GLView!!)
-	{
-		lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
-		if (!g_engine.run_game)
-			return;
+	while (true) {
+		{
+			lock_guard <recursive_mutex> lock (g_engine.vsync_lock);
+			if (g_engine.run_game)
+				break;
+		}
+
+		sched_yield ();
 	}
 
 //	LOGD ("UI callback started");

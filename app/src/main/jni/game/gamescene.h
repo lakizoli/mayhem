@@ -97,6 +97,8 @@ private:
 	void ConvertBGRADuringLoad ();
 	void ConvertBGRAInGame ();
 
+	void ExecStateTransitions ();
+
 	void DestroyButtons ();
 	void CreateButton (bool isVerticalLayout, Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale, const string& pressAsset, const Vector2D& posPress, const Vector2D& scalePress);
 
