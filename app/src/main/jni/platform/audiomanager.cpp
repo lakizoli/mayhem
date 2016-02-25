@@ -47,7 +47,12 @@ AudioManager::PlayerPCM::~PlayerPCM () {
 		(*play)->SetPlayState (play, SL_PLAYSTATE_STOPPED);
 	}
 
+	if (queue != nullptr) {
+		(*queue)->Clear (queue);
+	}
+
 	if (player != nullptr) {
+		(*player)->AbortAsyncOperation (player);
 		(*player)->Destroy (player);
 	}
 

@@ -231,7 +231,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_pause (JNIEnv* env, jc
 	ui_pause_emulation ();
 
 	AudioManager& man = AudioManager::Get ();
-	man.PausePCM (false);
+	man.PausePCM (true);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, jclass type) {
