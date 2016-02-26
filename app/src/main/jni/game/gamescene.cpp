@@ -23,8 +23,6 @@ extern "C" void ui_quicksnapshot_remove ();
 extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
-//TODO: release-ben a hack megjavitasa (mert debug-ban jonak tunik...)
-
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
 	mBackground.reset ();
