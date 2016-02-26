@@ -422,6 +422,7 @@ void GameScene::ExecStateTransitions () {
 			break;
 		case GameStates::AfterDemo:
 			if (mRedSum == 0 && mGreenSum == 0 && mBlueSum == 0) {
+				keyboard_key_released (57); //release space on keyboard
 				mState = GameStates::BeforeHack;
 			} else {
 //				Game::Util ().Log ("Space pressed (After demo)");
@@ -471,7 +472,8 @@ void GameScene::ExecStateTransitions () {
 //			Game::Util ().Log ("F5 released");
 			keyboard_key_released (63); //F5
 
-			mState = GameStates::HackPressSpace;
+			if (mRedSum <= 2576010 && mGreenSum <= 2576010 && mBlueSum <= 2576010)
+				mState = GameStates::HackPressSpace;
 			break;
 		case GameStates::HackPressSpace:
 //			Game::Util ().Log ("Space pressed (After hack)");
