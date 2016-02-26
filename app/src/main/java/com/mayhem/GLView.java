@@ -318,6 +318,11 @@ class GLView extends GLSurfaceView {
 
 		super.onPause ();
 	}
+
+	@Override
+	public void onResume () {
+		super.onResume ();
+	}
 	//endregion
 
 	//region touch handlers

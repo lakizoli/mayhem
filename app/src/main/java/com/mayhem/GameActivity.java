@@ -35,8 +35,8 @@ public class GameActivity extends Activity {
 	}
 
 	@Override
-	protected void onCreate (Bundle icicle) {
-		super.onCreate (icicle);
+	protected void onCreate (Bundle bundle) {
+		super.onCreate (bundle);
 		init (getAssets ());
 
 		AudioManager audioManager = (AudioManager) getSystemService (Context.AUDIO_SERVICE);
