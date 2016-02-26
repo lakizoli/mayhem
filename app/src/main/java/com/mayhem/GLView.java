@@ -285,7 +285,7 @@ class GLView extends GLSurfaceView {
 			mDeviceSampleRate = deviceSampleRate;
 		}
 
-		public synchronized void onDrawFrame (GL10 gl) {
+		public void onDrawFrame (GL10 gl) {
 			GameLib.step ();
 		}
 

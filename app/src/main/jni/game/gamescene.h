@@ -60,8 +60,8 @@ private:
 	//Button data
 	map<Buttons, shared_ptr<ColoredMesh>> mButtons;
 	uint32_t mButtonStates;
-	uint32_t mButtonLastStates;
-	map<int, Buttons> mButtonFingerIDs;
+	map<int, Buttons> mFingerIDButtons;
+	map<Buttons, int> mButtonFingerIDs;
 
 	map<Buttons, shared_ptr<ImageMesh>> mButtonPresses;
 
@@ -111,7 +111,10 @@ private:
 	void InitVerticalLayout (bool initButtons);
 	void InitHorizontalLayout (bool initButtons);
 
-	void HandleKeyStates (Buttons button);
+	void PressButton (int fingerID, Buttons button);
+	void ReleaseButton (int fingerID, Buttons button);
+	bool IsButtonPressed (Buttons button) const;
+
 	void HandleKey (Buttons button, bool pressed);
 
 	void HandleResetProgressStart (int fingerID, const Vector2D& pos);

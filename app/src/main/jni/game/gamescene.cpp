@@ -24,7 +24,6 @@ extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
 //TODO: release-ben a hack megjavitasa (mert debug-ban jonak tunik...)
-//TODO: forgatas hangjanak javitasa
 
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
@@ -42,7 +41,6 @@ void GameScene::Init (float width, float height) {
 		InitHorizontalLayout (true);
 
 	mButtonStates = (uint32_t) Buttons::None;
-	mButtonLastStates = (uint32_t) Buttons::None;
 
 	mIsResetInProgress = false;
 	mResetFingerID = -1;
@@ -167,23 +165,6 @@ void GameScene::Update (float elapsedTime) {
 		g_engine.pcm_dirty = false;
 	}
 
-	//Tweek input events
-//	if (mState == GameStates::Game && mButtonStates == (uint32_t) Buttons::None) {
-//		Game::Util ().Log ("clear keys...");
-//		keyboard_key_clear ();
-//	}
-
-//	if (mState == GameStates::Game && mButtonStates != mButtonLastStates) {
-//		HandleKeyStates (Buttons::Left);
-//		HandleKeyStates (Buttons::Right);
-//		HandleKeyStates (Buttons::Up);
-//		HandleKeyStates (Buttons::Down);
-//		HandleKeyStates (Buttons::Fire);
-//		HandleKeyStates (Buttons::C64);
-//
-//		mButtonLastStates = mButtonStates;
-//	}
-
 	//Handle reset
 	if (mIsResetInProgress) {
 		double currentTime = Game::Util ().GetTime ();
@@ -196,7 +177,7 @@ void GameScene::Update (float elapsedTime) {
 			mIsAutoStartInited = false;
 
 			mButtonStates = (uint32_t) Buttons::None;
-			mButtonLastStates = (uint32_t) Buttons::None;
+			mFingerIDButtons.clear ();
 			mButtonFingerIDs.clear ();
 
 			mRedSum = 0;
@@ -253,11 +234,8 @@ void GameScene::TouchDown (int fingerID, const Vector2D& pos) {
 
 	if (mState == GameStates::Game) {
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
-			if (it->second && (mButtonStates & (uint32_t) it->first) != (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If button not pressed
-				mButtonStates |= (uint32_t) it->first;
-				mButtonFingerIDs[fingerID] = it->first;
-
-				HandleKey (it->first, true);
+			if (it->second && !IsButtonPressed (it->first) && it->second->TransformedBoundingBox ().Contains (pos)) { //If button not pressed
+				PressButton (fingerID, it->first);
 			}
 		}
 	}
@@ -271,11 +249,8 @@ void GameScene::TouchUp (int fingerID, const Vector2D& pos) {
 
 	if (mState == GameStates::Game) {
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
-			if (it->second && (mButtonStates & (uint32_t) it->first) == (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //If already in pressed state
-				HandleKey (it->first, false);
-
-				mButtonStates &= !((uint32_t) it->first);
-				mButtonFingerIDs.erase (fingerID);
+			if (it->second && IsButtonPressed (it->first) && it->second->TransformedBoundingBox ().Contains (pos)) { //If already in pressed state
+				ReleaseButton (fingerID, it->first);
 			}
 		}
 	}
@@ -290,25 +265,19 @@ void GameScene::TouchMove (int fingerID, const Vector2D& pos) {
 	if (mState == GameStates::Game) {
 		//Handle key move out (release touch under finger)
 		{
-			auto it = mButtonFingerIDs.find (fingerID);
-			if (it != mButtonFingerIDs.end ()) {
+			auto it = mFingerIDButtons.find (fingerID);
+			if (it != mFingerIDButtons.end ()) {
 				auto itButton = mButtons.find (it->second);
 				if (itButton != mButtons.end () && !itButton->second->TransformedBoundingBox ().Contains (pos)) { //Touch up of button, when finger moved out from region
-					HandleKey (it->second, false);
-
-					mButtonStates &= !((uint32_t) it->second);
-					mButtonFingerIDs.erase (fingerID);
+					ReleaseButton (fingerID, it->second);
 				}
 			}
 		}
 
 		//Handle key move in (touch button under finger)
 		for (auto it = mButtons.begin (); it != mButtons.end (); ++it) {
-			if (it->second && (mButtonStates & (uint32_t) it->first) != (uint32_t) it->first && it->second->TransformedBoundingBox ().Contains (pos)) { //Handle key press by move
-				mButtonStates |= (uint32_t) it->first;
-				mButtonFingerIDs[fingerID] = it->first;
-
-				HandleKey (it->first, true);
+			if (it->second && !IsButtonPressed (it->first) && it->second->TransformedBoundingBox ().Contains (pos)) { //Handle key press by move
+				PressButton (fingerID, it->first);
 			}
 		}
 	}
@@ -541,7 +510,7 @@ void GameScene::DestroyButtons () {
 	mButtons.clear ();
 
 	mButtonStates = (uint32_t) Buttons::None;
-	mButtonLastStates = (uint32_t) Buttons::None;
+	mFingerIDButtons.clear ();
 	mButtonFingerIDs.clear ();
 
 	mIsResetInProgress = false;
@@ -668,12 +637,42 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 	}
 }
 
-void GameScene::HandleKeyStates (Buttons button) {
-	if ((mButtonStates & (uint32_t)button) /*&& !(mButtonLastStates & (uint32_t)button)*/) { //Button pressed
-		HandleKey (button, true);
-	} else if (!(mButtonStates & (uint32_t)button) /*&& (mButtonLastStates & (uint32_t)button)*/) { //Button released
-		HandleKey (button, false);
+void GameScene::PressButton (int fingerID, Buttons button) {
+	//Release opposite button if pressed
+	Buttons oppositeButton = Buttons::None;
+	switch (button) {
+		case Buttons::Left: oppositeButton = Buttons::Right; break;
+		case Buttons::Right: oppositeButton = Buttons::Left; break;
+		case Buttons::Up: oppositeButton = Buttons::Down; break;
+		case Buttons::Down: oppositeButton = Buttons::Up; break;
+		default:
+			break;
 	}
+
+	if (oppositeButton != Buttons::None && IsButtonPressed (oppositeButton)) {
+		auto it = mButtonFingerIDs.find (oppositeButton);
+		if (it != mButtonFingerIDs.end ())
+			ReleaseButton (it->second, oppositeButton);
+	}
+
+	//Press button
+	mButtonStates |= (uint32_t) button;
+	mFingerIDButtons[fingerID] = button;
+	mButtonFingerIDs[button] = fingerID;
+
+	HandleKey (button, true);
+}
+
+void GameScene::ReleaseButton (int fingerID, Buttons button) {
+	HandleKey (button, false);
+
+	mButtonStates &= !((uint32_t) button);
+	mFingerIDButtons.erase (fingerID);
+	mButtonFingerIDs.erase (button);
+}
+
+bool GameScene::IsButtonPressed (Buttons button) const {
+	return (mButtonStates & (uint32_t) button) == (uint32_t) button;
 }
 
 void GameScene::HandleKey (Buttons button, bool pressed) {
