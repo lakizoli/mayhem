@@ -28,11 +28,12 @@ typedef void (*t_fn_speed_callback) (double speed, double frame_rate, int warp_e
 extern "C" void vsyncarch_android_set_speed_callback (t_fn_speed_callback fn_speed_callback);
 
 //Sound callbacks
+typedef int (*t_fn_get_sample_rate) ();
 typedef void (*t_fn_sound_init) (int numChannels, int sampleRate, int bytesPerSample);
 typedef void (*t_fn_sound_close) ();
 typedef void (*t_fn_sound_write) (const uint8_t* buffer, size_t size);
 
-extern "C" void sound_android_set_pcm_callbacks (t_fn_sound_init sound_init, t_fn_sound_close sound_close, t_fn_sound_write sound_write);
+extern "C" void sound_android_set_pcm_callbacks (t_fn_get_sample_rate get_sample_rate, t_fn_sound_init sound_init, t_fn_sound_close sound_close, t_fn_sound_write sound_write);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Game data
@@ -141,6 +142,10 @@ static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
 	}
 }
 
+static int SoundGetSampleRate () {
+	return g_engine.deviceSamplingRate;
+}
+
 static void SoundInit (int numChannels, int sampleRate, int bytesPerSample) {
 	lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
 
@@ -173,7 +178,7 @@ static void SoundWrite (const uint8_t* buffer, size_t size) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // JNI functions of the GameLib java class
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight, jint deviceSamplingRate) {
 	CHECKMSG (g_engine.util != nullptr, "g_engine.util must be initialized before GameLib init!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine.contentManager must be initialized before GameLib init!");
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine.pointerIDs must be initialized before GameLib init!");
@@ -198,6 +203,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 
 	g_engine.canvas_dirty = false;
 
+	g_engine.deviceSamplingRate = deviceSamplingRate;
 	g_engine.pcm_sampleRate = 0;
 	g_engine.pcm_bytesPerSample = 0;
 	g_engine.pcm_numChannels = 0;
@@ -230,12 +236,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 	if (ui_emulation_is_paused ()) //Handle pause
 		return;
 
-//	static uint32_t frameIndex = 0;
-//	++frameIndex;
-//	if (elapsedTime < 0.01 || elapsedTime > 0.02) {
-//		LOGI ("step! frameIndex: %u elapsed time: %.4f", frameIndex, (float) elapsedTime);
-//	}
-
 	g_engine.game->Update ((float)elapsedTime);
 
 	//Render the game
@@ -247,9 +247,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_pause (JNIEnv* env, jc
 
 	g_engine.game->Pause ();
 	ui_pause_emulation ();
-
-//	AudioManager& man = AudioManager::Get ();
-//	man.PausePCM (true);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, jclass type) {
@@ -355,7 +352,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *e
 	video_android_set_init_callback (&InitCanvas);
 	video_android_set_locking_callbacks (&LockCanvas, &UnlockCanvas);
 	vsyncarch_android_set_speed_callback (&DisplaySpeed);
-	sound_android_set_pcm_callbacks (&SoundInit, &SoundClose, &SoundWrite);
+	sound_android_set_pcm_callbacks (&SoundGetSampleRate, &SoundInit, &SoundClose, &SoundWrite);
 
 	//Call main function of emulator
 	int res = main_program (argc, argv);

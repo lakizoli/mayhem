@@ -16,18 +16,18 @@ class GLView extends GLSurfaceView {
 	private static String TAG = "GLView";
 	private static final boolean DEBUG = false;
 
-	public GLView (Context context, Thread emulatorThread) {
+	public GLView (Context context, Thread emulatorThread, int deviceSampleRate) {
 		super (context);
-		init (emulatorThread, false, 0, 0);
+		init (emulatorThread, deviceSampleRate, false, 0, 0);
 	}
 
-	public GLView (Context context, Thread emulatorThread, boolean translucent, int depth, int stencil) {
+	public GLView (Context context, Thread emulatorThread, int deviceSampleRate, boolean translucent, int depth, int stencil) {
 		super (context);
-		init (emulatorThread, translucent, depth, stencil);
+		init (emulatorThread, deviceSampleRate, translucent, depth, stencil);
 	}
 
 	//region init functions
-	private void init (Thread emulatorThread, boolean translucent, int depth, int stencil) {
+	private void init (Thread emulatorThread, int deviceSampleRate, boolean translucent, int depth, int stencil) {
 		setKeepScreenOn (true);
 
         /* By default, GLSurfaceView() creates a RGB_565 opaque surface.
@@ -54,7 +54,7 @@ class GLView extends GLSurfaceView {
 				new ConfigChooser (5, 6, 5, 0, depth, stencil));
 
         /* Set the renderer responsible for frame rendering */
-		setRenderer (new Renderer (emulatorThread));
+		setRenderer (new Renderer (emulatorThread, deviceSampleRate));
 	}
 
 	private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
@@ -277,10 +277,12 @@ class GLView extends GLSurfaceView {
 
 	private static class Renderer implements GLSurfaceView.Renderer {
 		private Thread mEmulatorThread;
+		private int mDeviceSampleRate;
 
-		public Renderer (Thread emulatorThread) {
+		public Renderer (Thread emulatorThread, int deviceSampleRate) {
 			super ();
 			mEmulatorThread = emulatorThread;
+			mDeviceSampleRate = deviceSampleRate;
 		}
 
 		public synchronized void onDrawFrame (GL10 gl) {
@@ -295,7 +297,7 @@ class GLView extends GLSurfaceView {
 			} else { //First call
 				int refWidth = width > height ? 2392 : 1440;
 				int refHeight = width > height ? 1440 : 2392;
-				GameLib.init (width, height, refWidth, refHeight);
+				GameLib.init (width, height, refWidth, refHeight, mDeviceSampleRate);
 
 				//Starting the c64 emulator in a background thread
 				mEmulatorThread.start ();

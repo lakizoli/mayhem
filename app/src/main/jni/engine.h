@@ -37,6 +37,7 @@ struct engine_s {
 	//Emulator sound data
 	recursive_mutex pcm_lock;
 
+	uint32_t deviceSamplingRate;
 	uint32_t pcm_sampleRate;
 	uint32_t pcm_bytesPerSample;
 	uint32_t pcm_numChannels;

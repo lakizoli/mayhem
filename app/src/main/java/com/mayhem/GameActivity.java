@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -38,6 +39,10 @@ public class GameActivity extends Activity {
 		super.onCreate (icicle);
 		init (getAssets ());
 
+		AudioManager audioManager = (AudioManager) getSystemService (Context.AUDIO_SERVICE);
+		String sampleRateValue = audioManager.getProperty (AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+		int deviceSampleRate = Integer.parseInt (sampleRateValue);
+
 		mEmulatorThread = new Thread ("c64_emulator") {
 			@Override
 			public void run () {
@@ -45,7 +50,7 @@ public class GameActivity extends Activity {
 			}
 		};
 
-		mView = new GLView (getApplication (), mEmulatorThread);
+		mView = new GLView (getApplication (), mEmulatorThread, deviceSampleRate);
 		setContentView (mView);
 
 		View overlayView = getLayoutInflater ().inflate (R.layout.sample_overlay_view, null);
