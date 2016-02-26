@@ -59,6 +59,8 @@ private:
 
 	//Graphic data
 	shared_ptr<ImageMesh> mBackground;
+	shared_ptr<ImageMesh> mTitle;
+
 	vector<shared_ptr<ImageMesh>> mMayhemAnimFrames;
 	vector<shared_ptr<ImageMesh>> mStartingAnimFrames;
 
@@ -115,7 +117,7 @@ private:
 	void CreateButton (bool isVerticalLayout, Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale, const string& pressAsset, const Vector2D& posPress, const Vector2D& scalePress);
 
 	void DestroyAnims ();
-	void InitAnims (const Vector2D& startingPos, const Vector2D& mayhemPos);
+	void InitAnims (const Vector2D& titlePos, const Vector2D& startingPos, const Vector2D& mayhemPos);
 
 	shared_ptr<ImageMesh> LoadAnimFrame (const string& asset, int idx, const string& assetPostfix, const Vector2D& pos, const Vector2D& scale) const;
 

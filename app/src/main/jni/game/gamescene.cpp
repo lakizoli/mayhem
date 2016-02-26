@@ -24,7 +24,6 @@ extern "C" void ui_quicksnapshot_remove ();
 extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
-//TODO: loading screen osszerakasa...
 //TODO: turn off screen - kezelese...
 
 void GameScene::Init (float width, float height) {
@@ -57,6 +56,7 @@ void GameScene::Shutdown () {
 	Game::ContentManager ().ClosePCM ();
 
 	DestroyButtons ();
+	DestroyAnims ();
 
 	if (mBackground) {
 		mBackground->Shutdown ();
@@ -253,6 +253,9 @@ void GameScene::Render () {
 		mC64Screen->Render ();
 
 	if (mState != GameStates::Game) { //If not in game state, then show starting anims
+		if (mTitle)
+			mTitle->Render ();
+
 		if (mMayhemAnim) {
 			uint32_t frame = mMayhemAnim->Frame () % mMayhemAnimFrames.size ();
 			mMayhemAnimFrames[frame]->Render ();
@@ -614,6 +617,11 @@ void GameScene::CreateButton (bool isVerticalLayout, Buttons button, const Color
 }
 
 void GameScene::DestroyAnims () {
+	if (mTitle) {
+		mTitle->Shutdown ();
+		mTitle.reset ();
+	}
+
 	for (size_t i = 0;i < mMayhemAnimFrames.size ();++i)
 		mMayhemAnimFrames[i]->Shutdown ();
 	mMayhemAnimFrames.clear ();
@@ -627,8 +635,15 @@ void GameScene::DestroyAnims () {
 	mStartingAnim.reset ();
 }
 
-void GameScene::InitAnims (const Vector2D& startingPos, const Vector2D& mayhemPos) {
+void GameScene::InitAnims (const Vector2D& titlePos, const Vector2D& startingPos, const Vector2D& mayhemPos) {
 	Game& game = Game::Get ();
+	Vector2D screenRefScale = game.ScreenRefScale () * game.AspectScaleFactor ();
+	Vector2D screenRefPos = game.ScreenRefPos ();
+
+	mTitle = shared_ptr<ImageMesh> (new ImageMesh ("title.png"));
+	mTitle->Init ();
+	mTitle->Pos = screenRefPos + titlePos * screenRefScale;
+	mTitle->Scale = game.RefToLocal (192 * 4, 111 * 4) * screenRefScale;
 
 	for (int i = 2;i <= 11;++i)
 		mMayhemAnimFrames.push_back (LoadAnimFrame ("mayhem_anim/mayhem_", i, ".png", mayhemPos, game.RefToLocal (48 * 4, 42 * 4)));
@@ -696,7 +711,7 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 	//Init anims
 	if (mC64Screen) {
 		DestroyAnims ();
-		InitAnims (mC64Screen->Pos - game.RefToLocal (0, 200), mC64Screen->Pos + game.RefToLocal (0, 100));
+		InitAnims (mC64Screen->Pos - game.RefToLocal (0, 200), mC64Screen->Pos + game.RefToLocal (0, 180), mC64Screen->Pos + game.RefToLocal (0, 340));
 	}
 
 	//Init buttons
@@ -745,7 +760,7 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 	//Init anims
 	if (mC64Screen) {
 		DestroyAnims ();
-		InitAnims (mC64Screen->Pos - game.RefToLocal (0, 200), mC64Screen->Pos + game.RefToLocal (0, 100));
+		InitAnims (mC64Screen->Pos - game.RefToLocal (0, 200), mC64Screen->Pos + game.RefToLocal (0, 180), mC64Screen->Pos + game.RefToLocal (0, 340));
 	}
 
 	//Init buttons
