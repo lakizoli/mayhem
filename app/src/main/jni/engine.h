@@ -34,6 +34,16 @@ struct engine_s {
 	vector<uint8_t> canvas; //screen pixels in BGR format
 	volatile bool canvas_dirty;
 
+	//Emulator sound data
+	recursive_mutex pcm_lock;
+
+	uint32_t pcm_sampleRate;
+	uint32_t pcm_bytesPerSample;
+	uint32_t pcm_numChannels;
+
+	deque<vector<uint8_t>> pcm;
+	volatile bool pcm_dirty;
+
 	//Emulator syncronization data
 	recursive_mutex vsync_lock;
 	volatile bool run_game;

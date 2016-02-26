@@ -68,8 +68,10 @@ public:
 	void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample);
 	void ClosePCM ();
 
+	bool IsOpenedPCM () const {
+		return mPCMs.size () > 0; }
+
 	void WritePCM (const uint8_t* buffer, size_t size);
-	void PausePCM (bool resetPlayer);
 
 //Helper methods
 private:

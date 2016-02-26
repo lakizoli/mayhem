@@ -142,20 +142,32 @@ static void DisplaySpeed (double speed, double frame_rate, int warp_enabled) {
 }
 
 static void SoundInit (int numChannels, int sampleRate, int bytesPerSample) {
-	AudioManager& man = AudioManager::Get ();
-	man.OpenPCM (1.0f, numChannels, sampleRate, bytesPerSample);
+	lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
+
+	g_engine.pcm_sampleRate = (uint32_t)sampleRate;
+	g_engine.pcm_bytesPerSample = (uint32_t)bytesPerSample;
+	g_engine.pcm_numChannels = (uint32_t)numChannels;
+
+	g_engine.pcm.clear ();
+	g_engine.pcm_dirty = false;
 }
 
 static void SoundClose () {
-	AudioManager& man = AudioManager::Get ();
-	man.ClosePCM ();
+	lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
+
+	g_engine.pcm_sampleRate = 0;
+	g_engine.pcm_bytesPerSample = 0;
+	g_engine.pcm_numChannels = 0;
+
+	g_engine.pcm.clear ();
+	g_engine.pcm_dirty = false;
 }
 
 static void SoundWrite (const uint8_t* buffer, size_t size) {
-	AudioManager& man = AudioManager::Get ();
-	if (!g_engine.is_paused) {
-		man.WritePCM (buffer, size);
-	}
+	lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
+
+	g_engine.pcm.push_back (vector<uint8_t> (buffer, buffer + size));
+	g_engine.pcm_dirty = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +197,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 	g_engine.visible_height = 0;
 
 	g_engine.canvas_dirty = false;
+
+	g_engine.pcm_sampleRate = 0;
+	g_engine.pcm_bytesPerSample = 0;
+	g_engine.pcm_numChannels = 0;
+
+	g_engine.pcm_dirty = false;
 
 	glViewport (0, 0, screenWidth, screenHeight);
 }
@@ -230,8 +248,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_pause (JNIEnv* env, jc
 	g_engine.game->Pause ();
 	ui_pause_emulation ();
 
-	AudioManager& man = AudioManager::Get ();
-	man.PausePCM (true);
+//	AudioManager& man = AudioManager::Get ();
+//	man.PausePCM (true);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, jclass type) {

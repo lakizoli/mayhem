@@ -52,6 +52,8 @@ void GameScene::Init (float width, float height) {
 }
 
 void GameScene::Shutdown () {
+	Game::ContentManager ().ClosePCM ();
+
 	DestroyButtons ();
 
 	if (mBackground) {
@@ -80,6 +82,8 @@ void GameScene::Continue () {
 }
 
 void GameScene::Resize (float oldWidth, float oldHeight, float newWidth, float newHeight) {
+	Game::ContentManager ().ClosePCM ();
+
 	if (newWidth <= newHeight)
 		InitVerticalLayout (true);
 	else
@@ -137,6 +141,30 @@ void GameScene::Update (float elapsedTime) {
 			}
 			g_engine.canvas_dirty = false;
 		}
+	}
+
+	//Update C64 sound
+	if (g_engine.pcm_dirty) {
+		IContentManager& contentManager = Game::ContentManager ();
+
+		if (!contentManager.IsOpenedPCM ())
+			contentManager.OpenPCM (1.0f, g_engine.pcm_numChannels, g_engine.pcm_sampleRate, g_engine.pcm_bytesPerSample);
+
+		{
+			lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
+
+//			stringstream ss;
+//			ss << "pcm size: " << g_engine.pcm.size ();
+//			Game::Util ().Log (ss.str ());
+
+			while (g_engine.pcm.size () > 0) {
+				const vector<uint8_t>& data = g_engine.pcm[0];
+				contentManager.WritePCM (&data[0], data.size ());
+				g_engine.pcm.pop_front ();
+			}
+		}
+
+		g_engine.pcm_dirty = false;
 	}
 
 	//Tweek input events
@@ -382,7 +410,7 @@ void GameScene::ExecStateTransitions () {
 					Game::Util ().Log ("Auto starting disk image");
 					autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
 
-					Game::ContentManager ().PausePCM (true);
+					Game::ContentManager ().ClosePCM ();
 				}
 			} else if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
 				mState = GameStates::AfterBlue;
@@ -402,7 +430,7 @@ void GameScene::ExecStateTransitions () {
 					g_engine.is_warp = false;
 					resources_set_int ("WarpMode", 0);
 
-					Game::ContentManager ().PausePCM (true);
+					Game::ContentManager ().ClosePCM ();
 
 					mRedSum = mGreenSum = mBlueSum = 0;
 					mState = GameStates::Game;

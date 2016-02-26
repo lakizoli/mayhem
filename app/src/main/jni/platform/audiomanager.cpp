@@ -68,13 +68,29 @@ AudioManager::PCMSample::PCMSample (size_t len) :
 }
 
 size_t AudioManager::PCMSample::Write (const uint8_t* src, size_t size) {
+//	LOGD ("PCMSample::Write () - called! this: 0x%08x, src: 0x%08x, size: %u, pos: %u", (uint32_t)this, (uint32_t)src, (uint32_t)size, (uint32_t)pos);
+
 	size_t currentSize = buffer.size ();
-	if (pos >= currentSize)
+	if (pos >= currentSize) {
+//		LOGD ("PCMSample::Write () - return 0...");
 		return 0;
+	}
 
 	size_t writeSize = size;
 	if (pos + writeSize > currentSize)
 		writeSize = currentSize - pos;
+
+//	LOGD ("PCMSample::Write () - writeSize: %u", (uint32_t)writeSize);
+//
+//	char item[32];
+//	char buffer[128*1024];
+//
+//	buffer[0] = '\0';
+//	for (size_t i = 0;i < writeSize;++i) {
+//		sprintf (item, "0x%02x, ", (uint8_t)src[i]);
+//		strcat (buffer, item);
+//	}
+//	LOGD ("PCMSample::Write () - data: %s", buffer);
 
 	memcpy (&buffer[pos], src, writeSize);
 	pos += writeSize;
@@ -407,6 +423,12 @@ void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int b
 void AudioManager::ClosePCM () {
 	mPCMPlayer.reset ();
 	mPCMs.clear ();
+
+	mPCMNumChannels = 0;
+	mPCMSampleRate = 0;
+	mPCMBytesPerSample = 0;
+	mPCMWriteBufferIndex = 0;
+	mPCMVolume = 0;
 }
 
 void AudioManager::WritePCM (const uint8_t* buffer, size_t size) {
@@ -426,28 +448,6 @@ void AudioManager::WritePCM (const uint8_t* buffer, size_t size) {
 
 	if (mPCMPlayer == nullptr) //Start playing in the first moment
 		StartPCM ();
-}
-
-void AudioManager::PausePCM (bool resetPlayer) {
-	//Start playing
-	if (mPCMPlayer) {
-		PlayerPCM* player = mPCMPlayer.get ();
-
-		SLresult result = (*player->play)->SetPlayState (player->play, SL_PLAYSTATE_STOPPED);
-		CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::PausePCM () - Play::SetPlayState (Stop) failed");
-
-		player->bufferIndex = -1;
-	}
-
-	//Clear all buffer, and reset player
-	for (size_t i = 0;i < mPCMs.size ();++i)
-		mPCMs[i]->Rewind ();
-
-	mPCMWriteBufferIndex = 0;
-
-	//Reset player if needed
-	if (resetPlayer)
-		mPCMPlayer.reset ();
 }
 
 void AudioManager::StartPCM () {

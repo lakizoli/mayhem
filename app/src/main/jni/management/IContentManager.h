@@ -22,7 +22,11 @@ public:
 	virtual void StopSound (int soundID) = 0;
 	virtual bool IsSoundEnded (int soundID) const = 0;
 
-	virtual void PausePCM (bool resetPlayer) = 0;
+	virtual void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample) = 0;
+	virtual void ClosePCM () = 0;
+	virtual bool IsOpenedPCM () const = 0;
+
+	virtual void WritePCM (const uint8_t* buffer, size_t size) = 0;
 
 	virtual string ReadFile (const string& fileName) const = 0;
 	virtual void WriteFile (const string& fileName, const string& content) = 0;

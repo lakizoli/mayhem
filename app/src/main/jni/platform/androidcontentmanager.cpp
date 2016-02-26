@@ -220,9 +220,24 @@ bool AndroidContentManager::IsSoundEnded (int soundID) const {
 	return audioManager.IsEnded (soundID);
 }
 
-void AndroidContentManager::PausePCM (bool resetPlayer) {
+void AndroidContentManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample) {
 	AudioManager& audioManager = AudioManager::Get ();
-	return audioManager.PausePCM (resetPlayer);
+	audioManager.OpenPCM (volume, numChannels, sampleRate, bytesPerSample);
+}
+
+void AndroidContentManager::ClosePCM () {
+	AudioManager& audioManager = AudioManager::Get ();
+	audioManager.ClosePCM ();
+}
+
+bool AndroidContentManager::IsOpenedPCM () const {
+	AudioManager& audioManager = AudioManager::Get ();
+	return audioManager.IsOpenedPCM ();
+}
+
+void AndroidContentManager::WritePCM (const uint8_t* buffer, size_t size) {
+	AudioManager& audioManager = AudioManager::Get ();
+	audioManager.WritePCM (buffer, size);
 }
 
 string AndroidContentManager::ReadFile (const string& fileName) const {
