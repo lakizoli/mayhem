@@ -54,6 +54,8 @@ private:
 
 	GameStates mState;
 
+	int mHackCycleCounter;
+
 	//Graphic data
 	shared_ptr<ImageMesh> mBackground;
 

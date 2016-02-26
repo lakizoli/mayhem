@@ -23,6 +23,9 @@ extern "C" void ui_quicksnapshot_remove ();
 extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
+//TODO: loading screen osszerakasa...
+//TODO: turn off screen kezelese...
+
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
 	mBackground.reset ();
@@ -32,6 +35,8 @@ void GameScene::Init (float width, float height) {
 	mBlueSum = 0;
 
 	mState = GameStates::Blue;
+
+	mHackCycleCounter = 0;
 
 	if (width <= height)
 		InitVerticalLayout (true);
@@ -107,6 +112,8 @@ void GameScene::Update (float elapsedTime) {
 		mBlueSum = 0;
 
 		mState = GameStates::Blue;
+
+		mHackCycleCounter = 0;
 	}
 
 	//Update C64 screen texture
@@ -154,8 +161,10 @@ void GameScene::Update (float elapsedTime) {
 //			Game::Util ().Log (ss.str ());
 
 			while (g_engine.pcm.size () > 0) {
-				const vector<uint8_t>& data = g_engine.pcm[0];
-				contentManager.WritePCM (&data[0], data.size ());
+				if (mState == GameStates::Game) {
+					const vector <uint8_t>& data = g_engine.pcm[0];
+					contentManager.WritePCM (&data[0], data.size ());
+				}
 				g_engine.pcm.pop_front ();
 			}
 		}
@@ -184,12 +193,23 @@ void GameScene::Update (float elapsedTime) {
 
 			mState = GameStates::Blue;
 
+			mHackCycleCounter = 0;
+
 			ui_quicksnapshot_remove ();
 
 			vsync_suspend_speed_eval ();
 			machine_trigger_reset (MACHINE_RESET_MODE_HARD);
 
+			HandleKey (Buttons::Left, false);
+			HandleKey (Buttons::Right, false);
+			HandleKey (Buttons::Up, false);
+			HandleKey (Buttons::Down, false);
+			HandleKey (Buttons::Fire, false);
+			HandleKey (Buttons::C64, false);
+
 			keyboard_key_clear ();
+
+			Game::ContentManager ().ClosePCM ();
 		}
 	}
 }
@@ -431,6 +451,7 @@ void GameScene::ExecStateTransitions () {
 			if (mRedSum > 10000000 && mGreenSum > 10000000 && mBlueSum > 10000000) {
 				keyboard_key_clear ();
 
+				mHackCycleCounter = 0;
 				mState = GameStates::HackPressF1;
 			}
 			break;
@@ -443,10 +464,15 @@ void GameScene::ExecStateTransitions () {
 			}
 			break;
 		case GameStates::HackReleaseF1:
-//			Game::Util ().Log ("F1 released");
-			keyboard_key_released (59); //F1
+			++mHackCycleCounter;
 
-			mState = GameStates::HackPressF3;
+			if (mHackCycleCounter > 1) {
+//				Game::Util ().Log ("F1 released");
+				keyboard_key_released (59); //F1
+
+				mHackCycleCounter = 0;
+				mState = GameStates::HackPressF3;
+			}
 			break;
 		case GameStates::HackPressF3:
 //			Game::Util ().Log ("F3 pressed");
@@ -455,10 +481,15 @@ void GameScene::ExecStateTransitions () {
 			mState = GameStates::HackReleaseF3;
 			break;
 		case GameStates::HackReleaseF3:
-//			Game::Util ().Log ("F3 released");
-			keyboard_key_released (61); //F3
+			++mHackCycleCounter;
 
-			mState = GameStates::HackPressF5;
+			if (mHackCycleCounter > 1) {
+//				Game::Util ().Log ("F3 released");
+				keyboard_key_released (61); //F3
+
+				mHackCycleCounter = 0;
+				mState = GameStates::HackPressF5;
+			}
 			break;
 		case GameStates::HackPressF5:
 //			Game::Util ().Log ("F5 pressed");
@@ -467,11 +498,15 @@ void GameScene::ExecStateTransitions () {
 			mState = GameStates::HackReleaseF5;
 			break;
 		case GameStates::HackReleaseF5:
-//			Game::Util ().Log ("F5 released");
-			keyboard_key_released (63); //F5
+			++mHackCycleCounter;
 
-			if (mRedSum <= 2576010 && mGreenSum <= 2576010 && mBlueSum <= 2576010)
+			if (mHackCycleCounter > 1) {
+//				Game::Util ().Log ("F5 released");
+				keyboard_key_released (63); //F5
+
+				mHackCycleCounter = 0;
 				mState = GameStates::HackPressSpace;
+			}
 			break;
 		case GameStates::HackPressSpace:
 //			Game::Util ().Log ("Space pressed (After hack)");
@@ -482,8 +517,12 @@ void GameScene::ExecStateTransitions () {
 		case GameStates::HackReleaseSpace:
 //			Game::Util ().Log ("Space released (After hack)");
 			keyboard_key_released (57); //release space
+			++mHackCycleCounter;
 
-			mState = GameStates::AfterHack;
+			if (mHackCycleCounter < 3)
+				mState = GameStates::HackPressSpace;
+			else
+				mState = GameStates::AfterHack;
 			break;
 		case GameStates::AfterHack:
 			keyboard_key_clear ();
