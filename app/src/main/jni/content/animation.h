@@ -78,13 +78,13 @@ protected:
 
 class FrameAnimation : public Animation {
 private:
-	int mFrame;
+	uint32_t mFrame;
 	float mFrameTime;
 
 public:
 	FrameAnimation (float frameTime) : mFrameTime (frameTime) {}
 
-	int Frame () const {
+	uint32_t Frame () const {
 		return mFrame;
 	}
 

@@ -5,6 +5,7 @@
 #include "../content/texanimmesh.h"
 #include "../content/coloredmesh.h"
 #include "../content/imagemesh.h"
+#include "../content/animation.h"
 
 extern engine_s g_engine;
 extern "C" void keyboard_key_pressed (signed long key);
@@ -24,7 +25,7 @@ extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
 //TODO: loading screen osszerakasa...
-//TODO: turn off screen kezelese...
+//TODO: turn off screen - kezelese...
 
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
@@ -146,6 +147,29 @@ void GameScene::Update (float elapsedTime) {
 		}
 	}
 
+	//Update starting animations
+	if (mState != GameStates::Game) { //If not in game state, then show starting anims
+		if (mMayhemAnim) {
+			if (!mMayhemAnim->IsStarted ())
+				mMayhemAnim->Start ();
+
+			mMayhemAnim->Update (elapsedTime);
+		}
+
+		if (mStartingAnim) {
+			if (!mStartingAnim->IsStarted ())
+				mStartingAnim->Start ();
+
+			mStartingAnim->Update (elapsedTime);
+		}
+	} else { //In game state hide the starting anims
+		if (mMayhemAnim && mMayhemAnim->IsStarted ())
+			mMayhemAnim->Stop ();
+
+		if (mStartingAnim && mStartingAnim->IsStarted ())
+			mStartingAnim->Stop ();
+	}
+
 	//Update C64 sound
 	if (g_engine.pcm_dirty) {
 		IContentManager& contentManager = Game::ContentManager ();
@@ -227,6 +251,18 @@ void GameScene::Render () {
 
 	if (mC64Screen)
 		mC64Screen->Render ();
+
+	if (mState != GameStates::Game) { //If not in game state, then show starting anims
+		if (mMayhemAnim) {
+			uint32_t frame = mMayhemAnim->Frame () % mMayhemAnimFrames.size ();
+			mMayhemAnimFrames[frame]->Render ();
+		}
+
+		if (mStartingAnim) {
+			uint32_t frame = mStartingAnim->Frame () % mStartingAnimFrames.size ();
+			mStartingAnimFrames[frame]->Render ();
+		}
+	}
 
 //	for (auto it = mButtons.begin ();it != mButtons.end ();++it) {
 //		if (it->second)
@@ -577,6 +613,50 @@ void GameScene::CreateButton (bool isVerticalLayout, Buttons button, const Color
 	mButtonPresses[button] = leftPress;
 }
 
+void GameScene::DestroyAnims () {
+	for (size_t i = 0;i < mMayhemAnimFrames.size ();++i)
+		mMayhemAnimFrames[i]->Shutdown ();
+	mMayhemAnimFrames.clear ();
+
+	mMayhemAnim.reset ();
+
+	for (size_t i = 0;i < mStartingAnimFrames.size ();++i)
+		mStartingAnimFrames[i]->Shutdown ();
+	mStartingAnimFrames.clear ();
+
+	mStartingAnim.reset ();
+}
+
+void GameScene::InitAnims (const Vector2D& startingPos, const Vector2D& mayhemPos) {
+	Game& game = Game::Get ();
+
+	for (int i = 2;i <= 11;++i)
+		mMayhemAnimFrames.push_back (LoadAnimFrame ("mayhem_anim/mayhem_", i, ".png", mayhemPos, game.RefToLocal (48 * 4, 42 * 4)));
+
+	mMayhemAnim = shared_ptr<FrameAnimation> (new FrameAnimation (0.1f));
+
+	for (int i = 1;i <= 3;++i)
+		mStartingAnimFrames.push_back (LoadAnimFrame ("ss_anim/ss_", i, ".png", startingPos, game.RefToLocal (579, 58)));
+
+	mStartingAnim = shared_ptr<FrameAnimation> (new FrameAnimation (0.2f));
+}
+
+shared_ptr<ImageMesh> GameScene::LoadAnimFrame (const string& asset, int idx, const string& assetPostfix, const Vector2D& pos, const Vector2D& scale) const {
+	stringstream name;
+	name << asset << setw (2) << setfill('0') << idx << assetPostfix;
+
+	Game& game = Game::Get ();
+	Vector2D screenRefScale = game.ScreenRefScale () * game.AspectScaleFactor ();
+	Vector2D screenRefPos = game.ScreenRefPos ();
+
+	shared_ptr<ImageMesh> frame (new ImageMesh (name.str ()));
+	frame->Init ();
+	frame->Pos = screenRefPos + pos * screenRefScale;
+	frame->Scale = scale * screenRefScale;
+
+	return frame;
+}
+
 Vector2D GameScene::ConvertRefPercentCoordToLocal (bool isVerticalLayout, Vector2D percentCoord) const {
 	Game& game = Game::Get ();
 	if (isVerticalLayout) { //Vertcal position correction :)
@@ -611,6 +691,12 @@ void GameScene::InitVerticalLayout (bool initButtons) {
 
 		float c64aspect = (float)g_engine.visible_height / (float)g_engine.visible_width;
 		mC64Screen->Scale = ConvertRefPercentCoordToLocal (true, Vector2D (0.95f, 0.95f * c64aspect)) * screenRefScale;
+	}
+
+	//Init anims
+	if (mC64Screen) {
+		DestroyAnims ();
+		InitAnims (mC64Screen->Pos - game.RefToLocal (0, 200), mC64Screen->Pos + game.RefToLocal (0, 100));
 	}
 
 	//Init buttons
@@ -648,13 +734,18 @@ void GameScene::InitHorizontalLayout (bool initButtons) {
 	mBackground->Pos = screenRefPos + game.Size () / 2.0f * screenRefScale;
 	mBackground->Scale = game.Size () * screenRefScale;
 
-
 	//place C64 screen to the right position (corrected coordinates :)
 	if (mC64Screen) {
 		mC64Screen->Pos = screenRefPos + game.RefToLocal (Vector2D (0.5f, 0.517f) * game.RefSize ()) * screenRefScale;
 
 		float c64aspect = (float)g_engine.visible_height / (float)g_engine.visible_width;
 		mC64Screen->Scale = ConvertRefPercentCoordToLocal (false, Vector2D (0.95f, 0.95f * c64aspect)) * screenRefScale;
+	}
+
+	//Init anims
+	if (mC64Screen) {
+		DestroyAnims ();
+		InitAnims (mC64Screen->Pos - game.RefToLocal (0, 200), mC64Screen->Pos + game.RefToLocal (0, 100));
 	}
 
 	//Init buttons

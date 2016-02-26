@@ -7,6 +7,7 @@
 class TexAnimMesh;
 class ColoredMesh;
 class ImageMesh;
+class FrameAnimation;
 
 class GameScene : public Scene {
 //Definitions
@@ -58,6 +59,11 @@ private:
 
 	//Graphic data
 	shared_ptr<ImageMesh> mBackground;
+	vector<shared_ptr<ImageMesh>> mMayhemAnimFrames;
+	vector<shared_ptr<ImageMesh>> mStartingAnimFrames;
+
+	shared_ptr<FrameAnimation> mMayhemAnim;
+	shared_ptr<FrameAnimation> mStartingAnim;
 
 	//Button data
 	map<Buttons, shared_ptr<ColoredMesh>> mButtons;
@@ -107,6 +113,11 @@ private:
 
 	void DestroyButtons ();
 	void CreateButton (bool isVerticalLayout, Buttons button, const Color& color, const Vector2D& pos, const Vector2D& scale, const string& pressAsset, const Vector2D& posPress, const Vector2D& scalePress);
+
+	void DestroyAnims ();
+	void InitAnims (const Vector2D& startingPos, const Vector2D& mayhemPos);
+
+	shared_ptr<ImageMesh> LoadAnimFrame (const string& asset, int idx, const string& assetPostfix, const Vector2D& pos, const Vector2D& scale) const;
 
 	Vector2D ConvertRefPercentCoordToLocal (bool isVerticalLayout, Vector2D percentCoord) const;
 

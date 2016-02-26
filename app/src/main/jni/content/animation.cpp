@@ -85,5 +85,5 @@ void LinearAnimation::OnUpdate (float elapsedTime) {
 //////////////////////////////////////////////////////////////////////////////////////////
 void FrameAnimation::OnUpdate (float elapsedTime) {
 	Animation::OnUpdate (elapsedTime);
-	mFrame = (int) (mTimeOffset / mFrameTime);
+	mFrame = (uint32_t) (mTimeOffset / mFrameTime);
 }
