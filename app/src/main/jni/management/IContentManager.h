@@ -22,7 +22,7 @@ public:
 	virtual void StopSound (int soundID) = 0;
 	virtual bool IsSoundEnded (int soundID) const = 0;
 
-	virtual void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample) = 0;
+	virtual void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample, int deviceBufferFrames, int deviceBufferCount) = 0;
 	virtual void ClosePCM () = 0;
 	virtual bool IsOpenedPCM () const = 0;
 

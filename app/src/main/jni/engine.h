@@ -38,6 +38,8 @@ struct engine_s {
 	recursive_mutex pcm_lock;
 
 	uint32_t deviceSamplingRate;
+	uint32_t deviceBufferFrames;
+	uint32_t deviceBufferCount;
 	uint32_t pcm_sampleRate;
 	uint32_t pcm_bytesPerSample;
 	uint32_t pcm_numChannels;

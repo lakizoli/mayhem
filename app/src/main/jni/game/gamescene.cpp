@@ -24,6 +24,8 @@ extern "C" void ui_quicksnapshot_remove ();
 extern "C" void ui_quicksnapshot_save ();
 extern "C" int resources_set_int (const char *name, int value);
 
+//TODO: snapshot betoltes nem mindig zarodik le... (orokke starting...)
+
 void GameScene::Init (float width, float height) {
 	mC64Screen.reset (); //created in update phase
 	mBackground.reset ();
@@ -173,7 +175,7 @@ void GameScene::Update (float elapsedTime) {
 		IContentManager& contentManager = Game::ContentManager ();
 
 		if (!contentManager.IsOpenedPCM ())
-			contentManager.OpenPCM (1.0f, g_engine.pcm_numChannels, g_engine.pcm_sampleRate, g_engine.pcm_bytesPerSample);
+			contentManager.OpenPCM (1.0f, g_engine.pcm_numChannels, g_engine.pcm_sampleRate, g_engine.pcm_bytesPerSample, g_engine.deviceBufferFrames, g_engine.deviceBufferCount);
 
 		{
 			lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
@@ -199,6 +201,9 @@ void GameScene::Update (float elapsedTime) {
 		double currentTime = Game::Util ().GetTime ();
 		if (!mIsResetStarted && currentTime - mResetStartTime > 5) { //Hold fire button until 5 sec to reset machine...
 			Game::Util ().Log ("Reset C64");
+
+			memset (&mC64Pixels[0], 0, mC64Pixels.size () * sizeof (decltype (mC64Pixels)::value_type));
+			mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &mC64Pixels[0]);
 
 			g_engine.is_warp = true;
 

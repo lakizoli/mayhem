@@ -16,18 +16,18 @@ class GLView extends GLSurfaceView {
 	private static String TAG = "GLView";
 	private static final boolean DEBUG = false;
 
-	public GLView (Context context, Thread emulatorThread, int deviceSampleRate) {
+	public GLView (Context context, Thread emulatorThread, int deviceSampleRate, int deviceBufferFrames, int deviceBufferCount) {
 		super (context);
-		init (emulatorThread, deviceSampleRate, false, 0, 0);
+		init (emulatorThread, deviceSampleRate, deviceBufferFrames, deviceBufferCount, false, 0, 0);
 	}
 
-	public GLView (Context context, Thread emulatorThread, int deviceSampleRate, boolean translucent, int depth, int stencil) {
+	public GLView (Context context, Thread emulatorThread, int deviceSampleRate, int deviceBufferFrames, int deviceBufferCount, boolean translucent, int depth, int stencil) {
 		super (context);
-		init (emulatorThread, deviceSampleRate, translucent, depth, stencil);
+		init (emulatorThread, deviceSampleRate, deviceBufferFrames, deviceBufferCount, translucent, depth, stencil);
 	}
 
 	//region init functions
-	private void init (Thread emulatorThread, int deviceSampleRate, boolean translucent, int depth, int stencil) {
+	private void init (Thread emulatorThread, int deviceSampleRate, int deviceBufferFrames, int deviceBufferCount, boolean translucent, int depth, int stencil) {
 		setKeepScreenOn (true);
 
         /* By default, GLSurfaceView() creates a RGB_565 opaque surface.
@@ -54,7 +54,7 @@ class GLView extends GLSurfaceView {
 				new ConfigChooser (5, 6, 5, 0, depth, stencil));
 
         /* Set the renderer responsible for frame rendering */
-		setRenderer (new Renderer (emulatorThread, deviceSampleRate));
+		setRenderer (new Renderer (emulatorThread, deviceSampleRate, deviceBufferFrames, deviceBufferCount));
 	}
 
 	private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
@@ -278,11 +278,15 @@ class GLView extends GLSurfaceView {
 	private static class Renderer implements GLSurfaceView.Renderer {
 		private Thread mEmulatorThread;
 		private int mDeviceSampleRate;
+		private int mDeviceBufferFrames;
+		private int mDeviceBufferCount;
 
-		public Renderer (Thread emulatorThread, int deviceSampleRate) {
+		public Renderer (Thread emulatorThread, int deviceSampleRate, int deviceBufferFrames, int deviceBufferCount) {
 			super ();
 			mEmulatorThread = emulatorThread;
 			mDeviceSampleRate = deviceSampleRate;
+			mDeviceBufferFrames = deviceBufferFrames;
+			mDeviceBufferCount = deviceBufferCount;
 		}
 
 		public void onDrawFrame (GL10 gl) {
@@ -297,7 +301,7 @@ class GLView extends GLSurfaceView {
 			} else { //First call
 				int refWidth = width > height ? 2392 : 1440;
 				int refHeight = width > height ? 1440 : 2392;
-				GameLib.init (width, height, refWidth, refHeight, mDeviceSampleRate);
+				GameLib.init (width, height, refWidth, refHeight, mDeviceSampleRate, mDeviceBufferFrames, mDeviceBufferCount);
 
 				//Starting the c64 emulator in a background thread
 				mEmulatorThread.start ();

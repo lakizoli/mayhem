@@ -178,7 +178,8 @@ static void SoundWrite (const uint8_t* buffer, size_t size) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // JNI functions of the GameLib java class
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight, jint deviceSamplingRate) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight,
+																jint deviceSamplingRate, jint deviceBufferFrames, jint deviceBufferCount) {
 	CHECKMSG (g_engine.util != nullptr, "g_engine.util must be initialized before GameLib init!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine.contentManager must be initialized before GameLib init!");
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine.pointerIDs must be initialized before GameLib init!");
@@ -203,7 +204,9 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 
 	g_engine.canvas_dirty = false;
 
-	g_engine.deviceSamplingRate = deviceSamplingRate;
+	g_engine.deviceSamplingRate = (uint32_t) deviceSamplingRate;
+	g_engine.deviceBufferFrames = (uint32_t) deviceBufferFrames;
+	g_engine.deviceBufferCount = (uint32_t) deviceBufferCount;
 	g_engine.pcm_sampleRate = 0;
 	g_engine.pcm_bytesPerSample = 0;
 	g_engine.pcm_numChannels = 0;

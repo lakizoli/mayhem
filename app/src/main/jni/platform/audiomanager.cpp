@@ -402,7 +402,7 @@ bool AudioManager::IsEnded (int soundID) {
 	return isEnded;
 }
 
-void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample) {
+void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample, int deviceBufferFrames, int deviceBufferCount) {
 	CHECKMSG (numChannels > 0, "AudioManager::OpenPCM () - numChannels must be greater than 0!");
 	CHECKMSG (sampleRate > 0, "AudioManager::OpenPCM () - sampleRate must be greater than 0!");
 	CHECKMSG (bytesPerSample > 0, "AudioManager::OpenPCM () - bytesPerSample must be greater than 0!");
@@ -413,9 +413,22 @@ void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int b
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = volume;
 
+	size_t bufferSize = (size_t)mPCMBytesPerSample;
+	if (deviceBufferFrames > 0) {
+		int frameSize = bytesPerSample / sampleRate;
+		bufferSize = (size_t) (deviceBufferFrames * frameSize);
+	}
+
+	if (deviceBufferCount < 2) //Min 2 buffer needed!
+		deviceBufferCount = 2;
+	else if (deviceBufferCount > 255) //The maximum available buffer number
+		deviceBufferCount = 255;
+
+//	LOGD ("********* mPCMBytesPerSample: %d, bufferSize: %d, deviceBufferCount: %d", mPCMBytesPerSample, (int) bufferSize, deviceBufferCount);
+
 	mPCMs.clear ();
-	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample ((size_t) mPCMBytesPerSample)));
-	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample ((size_t) mPCMBytesPerSample)));
+	for (int i = 0;i < deviceBufferCount;++i)
+		mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (bufferSize)));
 
 	mPCMPlayer.reset ();
 }
@@ -453,11 +466,12 @@ void AudioManager::WritePCM (const uint8_t* buffer, size_t size) {
 void AudioManager::StartPCM () {
 	CHECKMSG (mInited, "AudioManager::StartPCM () - Can be called only after Init ()!");
 	CHECKMSG (mPCMPlayer == nullptr, "AudioManager::StartPCM () - Can be called only after Init ()!");
+	CHECKMSG (mPCMs.size () >= 2, "AudioManager::StartPCM () - Can be called only with minimum two buffers created before!");
 
 	// configure audio source
 	SLDataLocator_AndroidFD loc_fd = {
 		SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-		2
+		(SLint32) mPCMs.size ()
 	};
 
 	SLuint16 bitsPerSample = (SLuint16) (mPCMBytesPerSample / mPCMSampleRate * 8);
@@ -576,7 +590,7 @@ void SLAPIENTRY AudioManager::QueueCallback (SLAndroidSimpleBufferQueueItf queue
 	shared_ptr<PlayerPCM> player = man->mPCMPlayer;
 	CHECKMSG (player != nullptr, "AudioManager::QueueCallback () - player cannot be nullptr!");
 
-	player->bufferIndex = (player->bufferIndex + 1) % 2;
+	player->bufferIndex = (player->bufferIndex + 1) % (int) man->mPCMs.size ();
 //	LOGI ("starting to play buffer! index: %d", player->bufferIndex);
 
 	shared_ptr<PCMSample> sample = man->mPCMs[player->bufferIndex];
