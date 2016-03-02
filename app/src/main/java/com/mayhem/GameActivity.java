@@ -87,9 +87,9 @@ public class GameActivity extends Activity {
 			mAdFrameLayout.addView (mAdView);
 
 			AdRequest adRequest = new AdRequest.Builder ()
-					.addTestDevice ("75313E1E3C419C226D4DD43C42C2C483") //Samsung Galaxy S4
-					.addTestDevice ("54F567A97CA221C8AF6DC24725DD98A9") //Nexus 6 phone
-					.addTestDevice ("657B606D88C7789A95533151364832AC") //Nexus 9 tablet
+//					.addTestDevice ("75313E1E3C419C226D4DD43C42C2C483") //Samsung Galaxy S4
+//					.addTestDevice ("54F567A97CA221C8AF6DC24725DD98A9") //Nexus 6 phone
+//					.addTestDevice ("657B606D88C7789A95533151364832AC") //Nexus 9 tablet
 					.build ();
 			mAdView.loadAd (adRequest);
 		}
