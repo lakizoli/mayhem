@@ -1,4 +1,4 @@
-package com.mayhem;
+package com.mayheminmonsterland;
 
 import android.content.Context;
 import android.graphics.PixelFormat;

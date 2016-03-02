@@ -178,8 +178,8 @@ static void SoundWrite (const uint8_t* buffer, size_t size) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // JNI functions of the GameLib java class
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight,
-																jint deviceSamplingRate, jint deviceBufferFrames, jint deviceBufferCount) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight,
+																			 jint deviceSamplingRate, jint deviceBufferFrames, jint deviceBufferCount) {
 	CHECKMSG (g_engine.util != nullptr, "g_engine.util must be initialized before GameLib init!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine.contentManager must be initialized before GameLib init!");
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine.pointerIDs must be initialized before GameLib init!");
@@ -216,11 +216,11 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_init (JNIEnv *env, jcl
 	glViewport (0, 0, screenWidth, screenHeight);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isInited (JNIEnv* env, jclass type) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mayheminmonsterland_GameLib_isInited (JNIEnv* env, jclass type) {
 	return g_engine.game != nullptr ? JNI_TRUE : JNI_FALSE;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jclass clazz) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_step (JNIEnv *env, jclass clazz) {
 	//Sync game to vsync, when not in warp mode
 	s_auto_vsync_lock autoVsyncLock;
 //	LOGD ("UI callback started");
@@ -245,14 +245,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_step (JNIEnv *env, jcl
 	g_engine.game->Render ();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_pause (JNIEnv* env, jclass type) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_pause (JNIEnv* env, jclass type) {
 	g_engine.is_paused = true;
 
 	g_engine.game->Pause ();
 	ui_pause_emulation ();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, jclass type) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_resume (JNIEnv* env, jclass type) {
 	g_engine.lastUpdateTime = -1;
 
 	g_engine.game->Continue ();
@@ -261,11 +261,11 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resume (JNIEnv* env, j
 	g_engine.is_paused = false;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_isPaused (JNIEnv* env, jclass type) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mayheminmonsterland_GameLib_isPaused (JNIEnv* env, jclass type) {
 	return ui_emulation_is_paused () ? JNI_TRUE : JNI_FALSE;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resize (JNIEnv* env, jclass clazz, jint newScreenWidth, jint newScreenHeight) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_resize (JNIEnv* env, jclass clazz, jint newScreenWidth, jint newScreenHeight) {
 	//Sync game to vsync, when not in warp mode
 	s_auto_vsync_lock autoVsyncLock;
 //	LOGD ("resize run");
@@ -276,41 +276,41 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_resize (JNIEnv* env, j
 		g_engine.game->Resize (newScreenWidth, newScreenHeight);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameLib_hasPointerID (JNIEnv* env, jclass clazz, jint id) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mayheminmonsterland_GameLib_hasPointerID (JNIEnv* env, jclass clazz, jint id) {
 	return g_engine.pointerIDs && g_engine.pointerIDs->find (id) != g_engine.pointerIDs->end () ? JNI_TRUE : JNI_FALSE;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_insertPointerID (JNIEnv* env, jclass clazz, jint id) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_insertPointerID (JNIEnv* env, jclass clazz, jint id) {
 	if (g_engine.pointerIDs) {
 		g_engine.pointerIDs->insert (id);
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_erasePointerID (JNIEnv* env, jclass clazz, jint id) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_erasePointerID (JNIEnv* env, jclass clazz, jint id) {
 	if (g_engine.pointerIDs) {
 		g_engine.pointerIDs->erase (id);
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchDown (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_touchDown (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
 	if (g_engine.game) {
 		g_engine.game->TouchDown (id, x, y);
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchUp (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_touchUp (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
 	if (g_engine.game) {
 		g_engine.game->TouchUp (id, x, y);
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameLib_touchMove (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_touchMove (JNIEnv* env, jclass clazz, jint id, jfloat x, jfloat y) {
 	if (g_engine.game) {
 		g_engine.game->TouchMove (id, x, y);
 	}
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_mayhem_GameLib_runEmulator (JNIEnv *env, jclass clazz, jstring exePath, jstring diskPath) {
+extern "C" JNIEXPORT jint JNICALL Java_com_mayheminmonsterland_GameLib_runEmulator (JNIEnv *env, jclass clazz, jstring exePath, jstring diskPath) {
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine must be initialized before start emulator (pointerIDs)!");
 	CHECKMSG (g_engine.util != nullptr, "g_engine must be initialized before start emulator (util)!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine must be initialized before start emulator (contentManager)!");

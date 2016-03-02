@@ -73,8 +73,8 @@ public:
 
 		JNIEnv* env = GetEnv ();
 
-		AutoLocalRef<jclass> gameClass (env->FindClass ("com/mayhem/GameActivity"), "JNI::Init () - gameClass");
-		CHECKMSG (gameClass != nullptr, "cannot find java class: 'com/mayhem/GameActivity'");
+		AutoLocalRef<jclass> gameClass (env->FindClass ("com/mayheminmonsterland/GameActivity"), "JNI::Init () - gameClass");
+		CHECKMSG (gameClass != nullptr, "cannot find java class: 'com/mayheminmonsterland/GameActivity'");
 
 		AutoLocalRef<jclass> classClass (env->FindClass ("java/lang/Class"), "JNI::Init () - classClass");
 		CHECKMSG (classClass != nullptr, "cannot find java class: 'java/lang/Class'");

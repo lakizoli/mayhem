@@ -12,7 +12,7 @@ extern engine_s g_engine;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // JNI functions of the GameActivity java class
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameActivity_init (JNIEnv *env, jobject obj, jobject jAssetManager) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameActivity_init (JNIEnv *env, jobject obj, jobject jAssetManager) {
 	if (!g_engine.pointerIDs) {
 		g_engine.pointerIDs.reset (new set<int32_t> ());
 	}
@@ -26,7 +26,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayhem_GameActivity_init (JNIEnv *env
 	}
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mayhem_GameActivity_isLite (JNIEnv* env, jobject obj) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mayheminmonsterland_GameActivity_isLite (JNIEnv* env, jobject obj) {
 #ifdef FULL_VERSION
 	return JNI_FALSE;
 #else //FULL_VERSION

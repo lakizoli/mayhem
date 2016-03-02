@@ -56,8 +56,8 @@ class JNI_ContentManager {
 			return;
 
 		//Find and reference Java class and collect needed methods
-		JNI::AutoLocalRef <jclass> clazzActivity (JNI::FindClass ("com/mayhem/GameActivity"));
-		mClassActivity = JNI::GlobalReferenceObject (clazzActivity.get (), "com/mayhem/GameActivity");
+		JNI::AutoLocalRef <jclass> clazzActivity (JNI::FindClass ("com/mayheminmonsterland/GameActivity"));
+		mClassActivity = JNI::GlobalReferenceObject (clazzActivity.get (), "com/mayheminmonsterland/GameActivity");
 
 		JNI::AutoLocalRef <jclass> clazzAsset (JNI::FindClass ("android/content/res/AssetManager"));
 		mClassAsset = JNI::GlobalReferenceObject (clazzAsset.get (), "android/content/res/AssetManager");
@@ -108,7 +108,7 @@ class JNI_ContentManager {
 	}
 
 	//private:
-	jclass mClassActivity; ///< The java class: com/mayhem/GameActivity
+	jclass mClassActivity; ///< The java class: com/mayheminmonsterland/GameActivity
 	jclass mClassAsset; ///< The java class: android/content/res/AssetManager
 	jclass mClassInputStream; ///< The java class: java/io/InputStream
 	jclass mClassBitmapFactory; ///< The java class: android/graphics/BitmapFactory
