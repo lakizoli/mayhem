@@ -49,24 +49,24 @@ android {
                 abiFilter "armeabi-v7a"
             }
         }
-        arm8 {
-            dimension "abi"
-            ndk {
-                abiFilter "arm64-v8a"
-            }
-        }
+//        arm8 {
+//            dimension "abi"
+//            ndk {
+//                abiFilter "arm64-v8a"
+//            }
+//        }
         x86 {
             dimension "abi"
             ndk {
                 abiFilter "x86"
             }
         }
-        x64 {
-            dimension "abi"
-            ndk {
-                abiFilter "x86_64"
-            }
-        }
+//        x64 {
+//            dimension "abi"
+//            ndk {
+//                abiFilter "x86_64"
+//            }
+//        }
         // for detailed abiFilter descriptions, refer to "Supported ABIs" @
         // https://developer.android.com/ndk/guides/abis.html#sa
 
@@ -140,7 +140,7 @@ class NativeConfig {
         if (Os.isFamily(Os.FAMILY_WINDOWS))
             ndkbuild += ".cmd"
 
-        def ndkABIs = "APP_ABI=x86 armeabi-v7a arm64-v8a x86_64"
+        def ndkABIs = "APP_ABI=x86 armeabi-v7a" // arm64-v8a x86_64"
         def ndkDebug = "NDK_DEBUG=1"
 
         if (abiFilter == "x86") {
@@ -152,7 +152,7 @@ class NativeConfig {
         } else if (abiFilter == "x64") {
             ndkABIs = "APP_ABI=x86_64"
         } else if (abiFilter == "all") {
-            ndkABIs = "APP_ABI=x86 armeabi-v7a arm64-v8a x86_64"
+            ndkABIs = "APP_ABI=x86 armeabi-v7a" // arm64-v8a x86_64"
         }
 
         if (buildConfig == "debug") {
