@@ -12,7 +12,7 @@ import java.io.InputStream;
 public class GameLib {
 	private static String mDataPath;
 
-	public static native void init (int screenWidth, int screenHeight, int refWidth, int refHeight, int deviceSamplingRate, int deviceBufferFrames, int deviceBufferCount);
+	public static native void init (int screenWidth, int screenHeight, int refWidth, int refHeight, int deviceSamplingRate);
 	public static native boolean isInited ();
 
 	public static native void pause ();

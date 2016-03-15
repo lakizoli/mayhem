@@ -43,19 +43,10 @@ public class GameActivity extends Activity {
 		init (getAssets ());
 
 		int deviceSampleRate = 0;
-		int deviceBufferFrames = 0;
 		AudioManager audioManager = (AudioManager) getSystemService (Context.AUDIO_SERVICE);
 		if (Build.VERSION.SDK_INT >= 17) {
 			String sampleRateValue = audioManager.getProperty (AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
-			String framesPerBuffer = audioManager.getProperty (AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
 			deviceSampleRate = Integer.parseInt (sampleRateValue == null ? "0" : sampleRateValue);
-			deviceBufferFrames = Integer.parseInt (framesPerBuffer == null ? "0" : framesPerBuffer);
-		}
-
-		int deviceBufferCount = 0;
-		if (deviceSampleRate > 0) {
-			int minFrameCount = AudioTrack.getMinBufferSize (deviceSampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT); //TODO: need to came from C64 emulator settings... 2 == size of frame
-			deviceBufferCount = minFrameCount / deviceBufferFrames;
 		}
 
 		mEmulatorThread = new Thread ("c64_emulator") {
@@ -65,7 +56,7 @@ public class GameActivity extends Activity {
 			}
 		};
 
-		mView = new GLView (getApplication (), mEmulatorThread, deviceSampleRate, deviceBufferFrames, deviceBufferCount);
+		mView = new GLView (getApplication (), mEmulatorThread, deviceSampleRate);
 		setContentView (mView);
 
 		View overlayView = getLayoutInflater ().inflate (R.layout.sample_overlay_view, null);
@@ -89,7 +80,7 @@ public class GameActivity extends Activity {
 
 			AdRequest adRequest = new AdRequest.Builder ()
 //					.addTestDevice ("75313E1E3C419C226D4DD43C42C2C483") //Samsung Galaxy S4
-					.addTestDevice ("54F567A97CA221C8AF6DC24725DD98A9") //Nexus 6 phone
+//					.addTestDevice ("54F567A97CA221C8AF6DC24725DD98A9") //Nexus 6 phone
 //					.addTestDevice ("657B606D88C7789A95533151364832AC") //Nexus 9 tablet
 					.build ();
 			mAdView.loadAd (adRequest);

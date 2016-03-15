@@ -25,7 +25,7 @@ public:
 
 //PCM sound interface
 public:
-	virtual void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample, int deviceBufferFrames, int deviceBufferCount) = 0;
+	virtual void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample) = 0;
 	virtual void ClosePCM () = 0;
 	virtual bool IsOpenedPCM () const = 0;
 

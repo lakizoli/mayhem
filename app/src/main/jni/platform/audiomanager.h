@@ -65,7 +65,7 @@ public:
 
 //PCM player interface (in memory)
 public:
-	void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample, int deviceBufferFrames, int deviceBufferCount);
+	void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSec);
 	void ClosePCM ();
 
 	bool IsOpenedPCM () const {
@@ -76,6 +76,7 @@ public:
 //Helper methods
 private:
 	void StartPCM ();
+	void RealizeSLObject (SLObjectItf obj);
 
 	static void SLAPIENTRY PlayCallback (SLPlayItf play, void *context, SLuint32 event);
 	static void SLAPIENTRY QueueCallback (SLAndroidSimpleBufferQueueItf queue, void *context);
@@ -96,7 +97,7 @@ private:
 	shared_ptr<PlayerPCM> mPCMPlayer;
 	int mPCMNumChannels;
 	int mPCMSampleRate;
-	int mPCMBytesPerSample;
+	int mPCMBytesPerSec;
 	int mPCMWriteBufferIndex;
 	float mPCMVolume;
 

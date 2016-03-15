@@ -28,7 +28,7 @@ extern "C" void vsyncarch_android_set_speed_callback (t_fn_speed_callback fn_spe
 
 //Sound callbacks
 typedef int (*t_fn_get_sample_rate) ();
-typedef void (*t_fn_sound_init) (int numChannels, int sampleRate, int bytesPerSample);
+typedef void (*t_fn_sound_init) (int numChannels, int sampleRate, int bytesPerSec);
 typedef void (*t_fn_sound_close) ();
 typedef void (*t_fn_sound_write) (const uint8_t* buffer, size_t size);
 
@@ -145,11 +145,11 @@ static int SoundGetSampleRate () {
 	return g_engine.deviceSamplingRate;
 }
 
-static void SoundInit (int numChannels, int sampleRate, int bytesPerSample) {
+static void SoundInit (int numChannels, int sampleRate, int bytesPerSec) {
 	lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
 
 	g_engine.pcm_sampleRate = (uint32_t)sampleRate;
-	g_engine.pcm_bytesPerSample = (uint32_t)bytesPerSample;
+	g_engine.pcm_bytesPerSec = (uint32_t)bytesPerSec;
 	g_engine.pcm_numChannels = (uint32_t)numChannels;
 
 	g_engine.pcm.clear ();
@@ -160,7 +160,7 @@ static void SoundClose () {
 	lock_guard <recursive_mutex> lock (g_engine.pcm_lock);
 
 	g_engine.pcm_sampleRate = 0;
-	g_engine.pcm_bytesPerSample = 0;
+	g_engine.pcm_bytesPerSec = 0;
 	g_engine.pcm_numChannels = 0;
 
 	g_engine.pcm.clear ();
@@ -177,8 +177,7 @@ static void SoundWrite (const uint8_t* buffer, size_t size) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // JNI functions of the GameLib java class
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight,
-																			 jint deviceSamplingRate, jint deviceBufferFrames, jint deviceBufferCount) {
+extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight, jint deviceSamplingRate) {
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine.contentManager must be initialized before GameLib init!");
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine.pointerIDs must be initialized before GameLib init!");
 
@@ -203,10 +202,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_init (JNI
 	g_engine.canvas_dirty = false;
 
 	g_engine.deviceSamplingRate = (uint32_t) deviceSamplingRate;
-	g_engine.deviceBufferFrames = (uint32_t) deviceBufferFrames;
-	g_engine.deviceBufferCount = (uint32_t) deviceBufferCount;
 	g_engine.pcm_sampleRate = 0;
-	g_engine.pcm_bytesPerSample = 0;
+	g_engine.pcm_bytesPerSec = 0;
 	g_engine.pcm_numChannels = 0;
 
 	g_engine.pcm_dirty = false;

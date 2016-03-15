@@ -68,29 +68,14 @@ AudioManager::PCMSample::PCMSample (size_t len) :
 }
 
 size_t AudioManager::PCMSample::Write (const uint8_t* src, size_t size) {
-//	LOGD ("PCMSample::Write () - called! this: 0x%08x, src: 0x%08x, size: %u, pos: %u", (uint32_t)this, (uint32_t)src, (uint32_t)size, (uint32_t)pos);
-
 	size_t currentSize = buffer.size ();
 	if (pos >= currentSize) {
-//		LOGD ("PCMSample::Write () - return 0...");
 		return 0;
 	}
 
 	size_t writeSize = size;
 	if (pos + writeSize > currentSize)
 		writeSize = currentSize - pos;
-
-//	LOGD ("PCMSample::Write () - writeSize: %u", (uint32_t)writeSize);
-//
-//	char item[32];
-//	char buffer[128*1024];
-//
-//	buffer[0] = '\0';
-//	for (size_t i = 0;i < writeSize;++i) {
-//		sprintf (item, "0x%02x, ", (uint8_t)src[i]);
-//		strcat (buffer, item);
-//	}
-//	LOGD ("PCMSample::Write () - data: %s", buffer);
 
 	memcpy (&buffer[pos], src, writeSize);
 	pos += writeSize;
@@ -112,7 +97,7 @@ AudioManager::AudioManager () :
 	mOutputMixObject (nullptr),
 	mPCMNumChannels (0),
 	mPCMSampleRate (0),
-	mPCMBytesPerSample (0),
+	mPCMBytesPerSec (0),
 	mPCMWriteBufferIndex (0),
 	mPCMVolume (0),
 	mAssetManager (nullptr) {
@@ -162,7 +147,7 @@ void AudioManager::Shutdown () {
 
 	mPCMNumChannels = 0;
 	mPCMSampleRate = 0;
-	mPCMBytesPerSample = 0;
+	mPCMBytesPerSec = 0;
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = 0;
 
@@ -233,6 +218,10 @@ int AudioManager::Load (const string & assetName) {
 	// allocate played sound instance
 	struct Player* player = new struct Player (mNextID++);
 
+	// realize engine objects
+	RealizeSLObject (mEngineObject);
+	RealizeSLObject (mOutputMixObject);
+
 	// create audio player
 	const unsigned int NUM_INTERFACES = 4;
 	const SLInterfaceID ids[NUM_INTERFACES] = { SL_IID_PLAY, SL_IID_SEEK, SL_IID_VOLUME, SL_IID_PREFETCHSTATUS };
@@ -242,8 +231,7 @@ int AudioManager::Load (const string & assetName) {
 	CHECKMSG (result == SL_RESULT_SUCCESS && player->player != nullptr, "AudioManager::Load () - CreateAudioPlayer () failed");
 
 	// realize the player
-	result = (*player->player)->Realize (player->player, SL_BOOLEAN_FALSE);
-	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::Load () - Player::Realize () failed");
+	RealizeSLObject (player->player);
 
 	// get the play interface
 	result = (*player->player)->GetInterface (player->player, SL_IID_PLAY, &player->play);
@@ -402,33 +390,22 @@ bool AudioManager::IsEnded (int soundID) {
 	return isEnded;
 }
 
-void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample, int deviceBufferFrames, int deviceBufferCount) {
+void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSec) {
 	CHECKMSG (numChannels > 0, "AudioManager::OpenPCM () - numChannels must be greater than 0!");
 	CHECKMSG (sampleRate > 0, "AudioManager::OpenPCM () - sampleRate must be greater than 0!");
-	CHECKMSG (bytesPerSample > 0, "AudioManager::OpenPCM () - bytesPerSample must be greater than 0!");
+	CHECKMSG (bytesPerSec > 0, "AudioManager::OpenPCM () - bytesPerSec must be greater than 0!");
 
 	mPCMNumChannels = numChannels;
 	mPCMSampleRate = sampleRate;
-	mPCMBytesPerSample = bytesPerSample;
+	mPCMBytesPerSec = bytesPerSec;
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = volume;
 
-	size_t bufferSize = (size_t)mPCMBytesPerSample;
-	if (deviceBufferFrames > 0) {
-		int frameSize = bytesPerSample / sampleRate;
-		bufferSize = (size_t) (deviceBufferFrames * frameSize);
-	}
-
-	if (deviceBufferCount < 2) //Min 2 buffer needed!
-		deviceBufferCount = 2;
-	else if (deviceBufferCount > 255) //The maximum available buffer number
-		deviceBufferCount = 255;
-
-//	LOGD ("********* mPCMBytesPerSample: %d, bufferSize: %d, deviceBufferCount: %d", mPCMBytesPerSample, (int) bufferSize, deviceBufferCount);
-
 	mPCMs.clear ();
-	for (int i = 0;i < deviceBufferCount;++i)
-		mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (bufferSize)));
+
+	size_t bufferSize = 8 * (size_t)mPCMBytesPerSec;
+	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (bufferSize)));
+	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (bufferSize)));
 
 	mPCMPlayer.reset ();
 }
@@ -439,7 +416,7 @@ void AudioManager::ClosePCM () {
 
 	mPCMNumChannels = 0;
 	mPCMSampleRate = 0;
-	mPCMBytesPerSample = 0;
+	mPCMBytesPerSec = 0;
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = 0;
 }
@@ -474,7 +451,7 @@ void AudioManager::StartPCM () {
 		(SLint32) mPCMs.size ()
 	};
 
-	SLuint16 bitsPerSample = (SLuint16) (mPCMBytesPerSample / mPCMSampleRate * 8);
+	SLuint16 bitsPerSample = (SLuint16) (mPCMBytesPerSec / mPCMSampleRate * 8);
 
 	SLuint16 containerSize = 0;
 	switch (bitsPerSample) {
@@ -531,6 +508,10 @@ void AudioManager::StartPCM () {
 	mPCMPlayer.reset (new PlayerPCM ());
 	PlayerPCM* player = mPCMPlayer.get ();
 
+	// realize engine objects
+	RealizeSLObject (mEngineObject);
+	RealizeSLObject (mOutputMixObject);
+
 	// create audio player
 	const unsigned int NUM_INTERFACES = 3;
 	const SLInterfaceID ids[NUM_INTERFACES] = { SL_IID_PLAY, SL_IID_VOLUME, SL_IID_ANDROIDSIMPLEBUFFERQUEUE };
@@ -540,8 +521,7 @@ void AudioManager::StartPCM () {
 	CHECKMSG (result == SL_RESULT_SUCCESS && player->player != nullptr, "AudioManager::StartPCM () - CreateAudioPlayer () failed");
 
 	// realize the player
-	result = (*player->player)->Realize (player->player, SL_BOOLEAN_FALSE);
-	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::StartPCM () - Player::Realize () failed");
+	RealizeSLObject (player->player);
 
 	// get the play interface
 	result = (*player->player)->GetInterface (player->player, SL_IID_PLAY, &player->play);
@@ -559,10 +539,44 @@ void AudioManager::StartPCM () {
 	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::StartPCM () - Queue::RegisterCallback () failed");
 
 	QueueCallback (player->queue, this);
+	QueueCallback (player->queue, this);
 
 	//Start playing
 	result = (*player->play)->SetPlayState (player->play, SL_PLAYSTATE_PLAYING);
 	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::StartPCM () - Play::SetPlayState (Play) failed");
+}
+
+void AudioManager::RealizeSLObject (SLObjectItf obj) {
+	//Checking the object’s state since we would like to use it now, and its resources may have been stolen.
+	SLuint32 state;
+	SLresult result = (*obj)->GetState (obj, &state);
+	CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::RealizePlayer () - Player::GetState () failed");
+
+	//Resuming state synchronously.
+	if (state != SL_OBJECT_STATE_REALIZED) {
+		if (SL_OBJECT_STATE_SUSPENDED == state)
+			result = (*obj)->Resume (obj, SL_BOOLEAN_FALSE);
+		else if (SL_OBJECT_STATE_UNREALIZED == state)
+			result = (*obj)->Realize (obj, SL_BOOLEAN_FALSE);
+
+		while (SL_RESULT_RESOURCE_ERROR == result) {
+			//Not enough resources. Increasing object priority.
+			SLint32 priority;
+			SLboolean preemptable;
+
+			result = (*obj)->GetPriority (obj, &priority, &preemptable);
+			CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::RealizePlayer () - Player::GetPriority () failed");
+
+			result = (*obj)->SetPriority (obj, INT_MAX, SL_BOOLEAN_FALSE);
+			CHECKMSG (result == SL_RESULT_SUCCESS, "AudioManager::RealizePlayer () - Player::SetPriority () failed");
+
+			//trying again
+			if (SL_OBJECT_STATE_SUSPENDED == state)
+				result = (*obj)->Resume (obj, SL_BOOLEAN_FALSE);
+			else if (SL_OBJECT_STATE_UNREALIZED == state)
+				result = (*obj)->Realize (obj, SL_BOOLEAN_FALSE);
+		}
+	}
 }
 
 void SLAPIENTRY AudioManager::PlayCallback (SLPlayItf play, void *context, SLuint32 event) {
