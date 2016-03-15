@@ -13,8 +13,6 @@ public:
 	virtual int GetWidth (const Image image) const = 0;
 	virtual int GetHeight (const Image image) const = 0;
 
-	virtual void InitAdMob () const = 0;
-
 	virtual int LoadSound (const string& asset) = 0;
 	virtual void UnloadSound (int soundID) = 0;
 

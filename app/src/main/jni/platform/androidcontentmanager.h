@@ -15,8 +15,6 @@ public:
 	virtual int GetWidth (const Image image) const override;
 	virtual int GetHeight (const Image image) const override;
 
-	virtual void InitAdMob () const override;
-
 	virtual int LoadSound (const string& asset) override;
 	virtual void UnloadSound (int soundID) override;
 

@@ -22,7 +22,6 @@ class JNI_ContentManager {
 		mOpenMethod (nullptr),
 		mCloseMethod (nullptr),
 		mDecodeStreamMethod (nullptr),
-		mInitAdMobMethod (nullptr),
 		mReadFileMethod (nullptr),
 		mWriteFileMethod (nullptr),
 		mDisplayStatusMethod (nullptr),
@@ -74,7 +73,6 @@ class JNI_ContentManager {
 		mCloseMethod = JNI::GetMethod (clazzInputStream, "close", "()V");
 		mDecodeStreamMethod = JNI::GetStaticMethod (clazzBitmapFactory, "decodeStream", "(Ljava/io/InputStream;)Landroid/graphics/Bitmap;");
 
-		mInitAdMobMethod = JNI::GetMethod (clazzActivity, "initAdMob", "()V");
 		mReadFileMethod = JNI::GetMethod (clazzActivity, "readFile", "(Ljava/lang/String;)Ljava/lang/String;");
 		mWriteFileMethod = JNI::GetMethod (clazzActivity, "writeFile", "(Ljava/lang/String;Ljava/lang/String;)V");
 		mDisplayStatusMethod = JNI::GetMethod (clazzActivity, "displayStatus", "(Ljava/lang/String;)V");
@@ -101,7 +99,6 @@ class JNI_ContentManager {
 		mCloseMethod = nullptr;
 		mDecodeStreamMethod = nullptr;
 
-		mInitAdMobMethod = nullptr;
 		mReadFileMethod = nullptr;
 		mWriteFileMethod = nullptr;
 		mDisplayStatusMethod = nullptr;
@@ -118,7 +115,6 @@ class JNI_ContentManager {
 	jmethodID mCloseMethod; ///< The close () method.
 	jmethodID mDecodeStreamMethod; ///< The static decodeStream () method.
 
-	jmethodID mInitAdMobMethod;
 	jmethodID mReadFileMethod;
 	jmethodID mWriteFileMethod;
 	jmethodID mDisplayStatusMethod;
@@ -186,13 +182,6 @@ int AndroidContentManager::GetHeight (const Image image) const {
 	AndroidBitmapInfo info;
 	AndroidBitmap_getInfo (JNI::GetEnv (), (jobject) image, &info);
 	return (int) info.height;
-}
-
-void AndroidContentManager::InitAdMob () const {
-	JNI_ContentManager& jni = JNI_ContentManager::Get ();
-	JNIEnv* env = JNI::GetEnv ();
-	env->CallVoidMethod (jni.mActivity, jni.mInitAdMobMethod);
-	CHECKARG (!env->ExceptionCheck (), "Cannot init admob, Java exception occured!");
 }
 
 int AndroidContentManager::LoadSound (const string & asset) {

@@ -123,12 +123,6 @@ public class GameActivity extends Activity {
 	private native boolean isLite ();
 
 	//region AndroidContentManager functions
-	public void initAdMob () {
-		if (isLite ()) {
-			//...
-		}
-	}
-
 	public String readFile (String fileName) {
 		String content = "";
 		FileInputStream inputStream = null;
