@@ -21,6 +21,7 @@ import com.google.android.gms.ads.AdView;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
 
 public class GameActivity extends Activity {
 	GLView mView;
@@ -97,7 +98,6 @@ public class GameActivity extends Activity {
 		//Init Game Environment
 		if (!GameLib.initEnvironment (getApplication ())) {
 			// ... valami alert kellhet, mert nem tudunk elindulni ...
-			return;
 		}
 	}
 
@@ -123,21 +123,33 @@ public class GameActivity extends Activity {
 	private native boolean isLite ();
 
 	//region AndroidContentManager functions
-	public String readFile (String fileName) {
-		String content = "";
+	public String readTextFile (String fileName) {
+		byte[] data = readFile (fileName);
+		if (data != null)
+			return new String (data, 0, data.length);
+		return "";
+	}
+
+	public void writeTextFile (String fileName, String content, boolean append) {
+		writeFile (fileName, content.getBytes (), append);
+	}
+
+	public byte[] readFile (String fileName) {
+		byte[] content = null;
 		FileInputStream inputStream = null;
 		try {
 			inputStream = openFileInput (fileName);
+			long size = inputStream.getChannel ().size ();
 
-			StringBuffer fileContent = new StringBuffer ("");
+			ByteBuffer fileContent = ByteBuffer.allocate ((int)size);
 			byte[] buffer = new byte[1024];
 
-			int n = 0;
+			int n;
 			while ((n = inputStream.read (buffer)) != -1) {
-				fileContent.append (new String (buffer, 0, n));
+				fileContent.put (buffer, 0, n);
 			}
 
-			content = fileContent.toString ();
+			content = fileContent.array ();
 		} catch (Exception e) {
 			e.printStackTrace ();
 		} finally {
@@ -152,11 +164,11 @@ public class GameActivity extends Activity {
 		return content;
 	}
 
-	public void writeFile (String fileName, String content) {
+	public void writeFile (String fileName, byte[] content, boolean append) {
 		FileOutputStream outputStream = null;
 		try {
-			outputStream = openFileOutput (fileName, Context.MODE_PRIVATE);
-			outputStream.write (content.getBytes ());
+			outputStream = openFileOutput (fileName, append ? Context.MODE_APPEND : Context.MODE_PRIVATE);
+			outputStream.write (content);
 		} catch (Exception e) {
 			e.printStackTrace ();
 		} finally {
@@ -171,12 +183,11 @@ public class GameActivity extends Activity {
 
 	public void displayStatus (final String status) {
 		runOnUiThread (new Runnable () {
-						   @Override
-						   public void run () {
-							   mStatusLine.setText (status);
-						   }
-					   }
-		);
+		   @Override
+		   public void run () {
+			   mStatusLine.setText (status);
+		   }
+		});
 	}
 	//endregion
 

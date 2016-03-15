@@ -47,12 +47,12 @@ void MayhemGame::Shutdown () {
 }
 
 void MayhemGame::ReadGameState () {
-	istringstream ss (ContentManager ().ReadFile ("state.save"));
+	istringstream ss (ContentManager ().ReadTextFile ("state.save"));
 	_state << ss;
 }
 
 void MayhemGame::WriteGameState () {
 	stringstream ss;
 	ss << _state;
-	ContentManager ().WriteFile ("state.save", ss.str ());
+	ContentManager ().WriteTextFile ("state.save", ss.str (), false);
 }

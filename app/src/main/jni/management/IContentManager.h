@@ -33,8 +33,11 @@ public:
 
 //Utility interface
 public:
-	virtual string ReadFile (const string& fileName) const = 0;
-	virtual void WriteFile (const string& fileName, const string& content) = 0;
+	virtual string ReadTextFile (const string& fileName) const = 0;
+	virtual void WriteTextFile (const string& fileName, const string& content, bool append) = 0;
+
+	virtual vector<uint8_t> ReadFile (const string& fileName) const = 0;
+	virtual void WriteFile (const string& fileName, const vector<uint8_t>& content, bool append) = 0;
 
 	virtual void DisplayStatus (const string& status) const = 0;
 

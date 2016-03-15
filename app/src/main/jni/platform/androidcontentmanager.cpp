@@ -1,6 +1,7 @@
 #include "../pch.h"
 #include "androidcontentmanager.h"
 #include "../jnihelper/JavaString.h"
+#include "../jnihelper/JavaByteArray.h"
 #include "audiomanager.h"
 
 #include <android/asset_manager.h>
@@ -22,6 +23,8 @@ class JNI_ContentManager {
 		mOpenMethod (nullptr),
 		mCloseMethod (nullptr),
 		mDecodeStreamMethod (nullptr),
+		mReadTextFileMethod (nullptr),
+		mWriteTextFileMethod (nullptr),
 		mReadFileMethod (nullptr),
 		mWriteFileMethod (nullptr),
 		mDisplayStatusMethod (nullptr),
@@ -73,8 +76,10 @@ class JNI_ContentManager {
 		mCloseMethod = JNI::GetMethod (clazzInputStream, "close", "()V");
 		mDecodeStreamMethod = JNI::GetStaticMethod (clazzBitmapFactory, "decodeStream", "(Ljava/io/InputStream;)Landroid/graphics/Bitmap;");
 
-		mReadFileMethod = JNI::GetMethod (clazzActivity, "readFile", "(Ljava/lang/String;)Ljava/lang/String;");
-		mWriteFileMethod = JNI::GetMethod (clazzActivity, "writeFile", "(Ljava/lang/String;Ljava/lang/String;)V");
+		mReadTextFileMethod = JNI::GetMethod (clazzActivity, "readTextFile", "(Ljava/lang/String;)Ljava/lang/String;");
+		mWriteTextFileMethod = JNI::GetMethod (clazzActivity, "writeTextFile", "(Ljava/lang/String;Ljava/lang/String;Z)V");
+		mReadFileMethod = JNI::GetMethod (clazzActivity, "readFile", "(Ljava/lang/String;)[B");
+		mWriteFileMethod = JNI::GetMethod (clazzActivity, "writeFile", "(Ljava/lang/String;[BZ)V");
 		mDisplayStatusMethod = JNI::GetMethod (clazzActivity, "displayStatus", "(Ljava/lang/String;)V");
 	}
 
@@ -99,6 +104,8 @@ class JNI_ContentManager {
 		mCloseMethod = nullptr;
 		mDecodeStreamMethod = nullptr;
 
+		mReadTextFileMethod = nullptr;
+		mWriteTextFileMethod = nullptr;
 		mReadFileMethod = nullptr;
 		mWriteFileMethod = nullptr;
 		mDisplayStatusMethod = nullptr;
@@ -115,6 +122,8 @@ class JNI_ContentManager {
 	jmethodID mCloseMethod; ///< The close () method.
 	jmethodID mDecodeStreamMethod; ///< The static decodeStream () method.
 
+	jmethodID mReadTextFileMethod;
+	jmethodID mWriteTextFileMethod;
 	jmethodID mReadFileMethod;
 	jmethodID mWriteFileMethod;
 	jmethodID mDisplayStatusMethod;
@@ -229,18 +238,33 @@ void AndroidContentManager::WritePCM (const uint8_t* buffer, size_t size) {
 	audioManager.WritePCM (buffer, size);
 }
 
-string AndroidContentManager::ReadFile (const string& fileName) const {
+string AndroidContentManager::ReadTextFile (const string& fileName) const {
 	JNI_ContentManager& jni = JNI_ContentManager::Get ();
 	JNIEnv* env = JNI::GetEnv ();
-	JavaString&& jstr = JNI::CallObjectMethod<JavaString> (jni.mActivity, jni.mReadFileMethod, JavaString (fileName).get ());
-	CHECKARG (!env->ExceptionCheck (), "Cannot read file, Java exception occured!");
+	JavaString&& jstr = JNI::CallObjectMethod<JavaString> (jni.mActivity, jni.mReadTextFileMethod, JavaString (fileName).get ());
+	CHECKARG (!env->ExceptionCheck (), "Cannot read text file, Java exception occured!");
 	return jstr.getString ();
 }
 
-void AndroidContentManager::WriteFile (const string& fileName, const string& content) {
+void AndroidContentManager::WriteTextFile (const string& fileName, const string& content, bool append) {
 	JNI_ContentManager& jni = JNI_ContentManager::Get ();
 	JNIEnv* env = JNI::GetEnv ();
-	env->CallVoidMethod (jni.mActivity, jni.mWriteFileMethod, JavaString (fileName).get (), JavaString (content).get ());
+	env->CallVoidMethod (jni.mActivity, jni.mWriteTextFileMethod, JavaString (fileName).get (), JavaString (content).get (), append ? JNI_TRUE : JNI_FALSE);
+	CHECKARG (!env->ExceptionCheck (), "Cannot write text file, Java exception occured!");
+}
+
+vector<uint8_t> AndroidContentManager::ReadFile (const string& fileName) const {
+	JNI_ContentManager& jni = JNI_ContentManager::Get ();
+	JNIEnv* env = JNI::GetEnv ();
+	JavaByteArray&& jarr = JNI::CallObjectMethod<JavaByteArray> (jni.mActivity, jni.mReadFileMethod, JavaString (fileName).get ());
+	CHECKARG (!env->ExceptionCheck (), "Cannot read file, Java exception occured!");
+	return jarr.getBytes ();
+}
+
+void AndroidContentManager::WriteFile (const string& fileName, const vector<uint8_t>& content, bool append) {
+	JNI_ContentManager& jni = JNI_ContentManager::Get ();
+	JNIEnv* env = JNI::GetEnv ();
+	env->CallVoidMethod (jni.mActivity, jni.mWriteFileMethod, JavaString (fileName).get (), JavaByteArray (content).get (), append ? JNI_TRUE : JNI_FALSE);
 	CHECKARG (!env->ExceptionCheck (), "Cannot write file, Java exception occured!");
 }
 

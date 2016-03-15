@@ -36,8 +36,11 @@ public:
 
 //Utility interface
 public:
-	virtual string ReadFile (const string& fileName) const override;
-	virtual void WriteFile (const string& fileName, const string& content) override;
+	virtual string ReadTextFile (const string& fileName) const override;
+	virtual void WriteTextFile (const string& fileName, const string& content, bool append) override;
+
+	virtual vector<uint8_t> ReadFile (const string& fileName) const override;
+	virtual void WriteFile (const string& fileName, const vector<uint8_t>& content, bool append) override;
 
 	virtual void DisplayStatus (const string& status) const override;
 
