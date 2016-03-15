@@ -3,8 +3,7 @@
 
 Game* Game::mGame = nullptr;
 
-Game::Game (IUtil& util, IContentManager& contentManager) :
-	mUtil (util),
+Game::Game (IContentManager& contentManager) :
 	mContentManager (contentManager),
 	mWidth (0),
 	mHeight (0),

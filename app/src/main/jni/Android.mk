@@ -30,7 +30,6 @@ LOCAL_CPP_EXTENSION := .cpp
 LOCAL_SRC_FILES +=						\
 	jnihelper/jniload.cpp				\
 	platform/androidcontentmanager.cpp	\
-	platform/androidutil.cpp			\
 	platform/audiomanager.cpp			\
 	management/glerror.cpp				\
 	management/game.cpp					\

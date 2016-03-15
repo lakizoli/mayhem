@@ -1,6 +1,5 @@
 #pragma once
 
-#include "IUtil.h"
 #include "IContentManager.h"
 #include "scene.h"
 #include "../content/vector2D.h"
@@ -16,7 +15,6 @@ class Game {
 //Data 
 private:
 	static Game* mGame;
-	IUtil& mUtil;
 	IContentManager& mContentManager;
 
 	float mWidth;
@@ -32,7 +30,7 @@ private:
 
 //Construction
 protected:
-	Game (IUtil& util, IContentManager& contentManager);
+	Game (IContentManager& contentManager);
 
 public:
 	virtual ~Game () {
@@ -42,11 +40,6 @@ public:
 	static Game& Get () {
 		assert (mGame != nullptr);
 		return *mGame;
-	}
-
-	static IUtil& Util () {
-		assert (mGame != nullptr);
-		return mGame->mUtil;
 	}
 
 	static IContentManager& ContentManager () {

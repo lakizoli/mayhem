@@ -120,7 +120,7 @@ void GameScene::Update (float elapsedTime) {
 	//Update C64 screen texture
 	if (mC64Screen) {
 		if (g_engine.canvas_dirty || IsDirtyState ()) { //Something changed on the screen, so we need to refresh the texture
-//			Game::Util ().Log ("dirty");
+//			Game::ContentManager ().Log ("dirty");
 
 			mRedSum = 0;
 			mGreenSum = 0;
@@ -134,7 +134,7 @@ void GameScene::Update (float elapsedTime) {
 
 //			stringstream ss;
 //			ss << "draw -> R: " << mRedSum << ", G: " << mGreenSum << ", B: " << mBlueSum;
-//			Game::Util ().Log (ss.str ());
+//			Game::ContentManager ().Log (ss.str ());
 
 			//Handle game state transitions during initialization (C64 load process)
 			ExecStateTransitions ();
@@ -182,7 +182,7 @@ void GameScene::Update (float elapsedTime) {
 
 //			stringstream ss;
 //			ss << "pcm size: " << g_engine.pcm.size ();
-//			Game::Util ().Log (ss.str ());
+//			Game::ContentManager ().Log (ss.str ());
 
 			while (g_engine.pcm.size () > 0) {
 				if (mState == GameStates::Game) {
@@ -198,9 +198,10 @@ void GameScene::Update (float elapsedTime) {
 
 	//Handle reset
 	if (mIsResetInProgress) {
-		double currentTime = Game::Util ().GetTime ();
+		IContentManager& contentManager = Game::ContentManager ();
+		double currentTime = contentManager.GetTime ();
 		if (!mIsResetStarted && currentTime - mResetStartTime > 5) { //Hold fire button until 5 sec to reset machine...
-			Game::Util ().Log ("Reset C64");
+			contentManager.Log ("Reset C64");
 
 			memset (&mC64Pixels[0], 0, mC64Pixels.size () * sizeof (decltype (mC64Pixels)::value_type));
 			mC64Screen->SetPixels (g_engine.visible_width, g_engine.visible_height, g_engine.canvas_bit_per_pixel, &mC64Pixels[0]);
@@ -436,7 +437,7 @@ void GameScene::ExecStateTransitions () {
 				if (!mIsAutoStartInited) {
 					mIsAutoStartInited = true;
 
-					Game::Util ().Log ("Auto starting disk image");
+					Game::ContentManager ().Log ("Auto starting disk image");
 					autostart_disk (g_engine.diskImage.c_str (), nullptr, 0, AUTOSTART_MODE_RUN);
 
 					Game::ContentManager ().ClosePCM ();
@@ -468,14 +469,14 @@ void GameScene::ExecStateTransitions () {
 			break;
 		case GameStates::DemoPressSpace:
 			if (mRedSum > 5000000 && mGreenSum > 5000000 && mBlueSum > 5000000) {
-//				Game::Util ().Log ("Space pressed (Demo)");
+//				Game::ContentManager ().Log ("Space pressed (Demo)");
 				keyboard_key_pressed (57); //press space on keyboard
 
 				mState = GameStates::DemoReleaseSpace;
 			}
 			break;
 		case GameStates::DemoReleaseSpace:
-//			Game::Util ().Log ("Space pressed (Released)");
+//			Game::ContentManager ().Log ("Space pressed (Released)");
 			keyboard_key_released (57); //release space on keyboard
 
 			mState = GameStates::AfterDemo;
@@ -485,7 +486,7 @@ void GameScene::ExecStateTransitions () {
 				keyboard_key_released (57); //release space on keyboard
 				mState = GameStates::BeforeHack;
 			} else {
-//				Game::Util ().Log ("Space pressed (After demo)");
+//				Game::ContentManager ().Log ("Space pressed (After demo)");
 				keyboard_key_pressed (57); //press space on keyboard
 			}
 			break;
@@ -499,7 +500,7 @@ void GameScene::ExecStateTransitions () {
 			break;
 		case GameStates::HackPressF1:
 			if (mRedSum < 10000000 && mGreenSum < 10000000 && mBlueSum < 10000000) {
-//				Game::Util ().Log ("F1 pressed");
+//				Game::ContentManager ().Log ("F1 pressed");
 				keyboard_key_pressed (59); //F1
 
 				mState = GameStates::HackReleaseF1;
@@ -509,7 +510,7 @@ void GameScene::ExecStateTransitions () {
 			++mHackCycleCounter;
 
 			if (mHackCycleCounter > 1) {
-//				Game::Util ().Log ("F1 released");
+//				Game::ContentManager ().Log ("F1 released");
 				keyboard_key_released (59); //F1
 
 				mHackCycleCounter = 0;
@@ -517,7 +518,7 @@ void GameScene::ExecStateTransitions () {
 			}
 			break;
 		case GameStates::HackPressF3:
-//			Game::Util ().Log ("F3 pressed");
+//			Game::ContentManager ().Log ("F3 pressed");
 			keyboard_key_pressed (61); //F3
 
 			mState = GameStates::HackReleaseF3;
@@ -526,7 +527,7 @@ void GameScene::ExecStateTransitions () {
 			++mHackCycleCounter;
 
 			if (mHackCycleCounter > 1) {
-//				Game::Util ().Log ("F3 released");
+//				Game::ContentManager ().Log ("F3 released");
 				keyboard_key_released (61); //F3
 
 				mHackCycleCounter = 0;
@@ -534,7 +535,7 @@ void GameScene::ExecStateTransitions () {
 			}
 			break;
 		case GameStates::HackPressF5:
-//			Game::Util ().Log ("F5 pressed");
+//			Game::ContentManager ().Log ("F5 pressed");
 			keyboard_key_pressed (63); //F5
 
 			mState = GameStates::HackReleaseF5;
@@ -543,7 +544,7 @@ void GameScene::ExecStateTransitions () {
 			++mHackCycleCounter;
 
 			if (mHackCycleCounter > 1) {
-//				Game::Util ().Log ("F5 released");
+//				Game::ContentManager ().Log ("F5 released");
 				keyboard_key_released (63); //F5
 
 				mHackCycleCounter = 0;
@@ -551,13 +552,13 @@ void GameScene::ExecStateTransitions () {
 			}
 			break;
 		case GameStates::HackPressSpace:
-//			Game::Util ().Log ("Space pressed (After hack)");
+//			Game::ContentManager ().Log ("Space pressed (After hack)");
 			keyboard_key_pressed (57); //press space
 
 			mState = GameStates::HackReleaseSpace;
 			break;
 		case GameStates::HackReleaseSpace:
-//			Game::Util ().Log ("Space released (After hack)");
+//			Game::ContentManager ().Log ("Space released (After hack)");
 			keyboard_key_released (57); //release space
 			++mHackCycleCounter;
 
@@ -880,7 +881,7 @@ void GameScene::HandleResetProgressStart (int fingerID, const Vector2D& pos) {
 	if (it != mButtons.end () && it->second && it->second->TransformedBoundingBox ().Contains (pos)) {
 		mIsResetInProgress = true;
 		mResetFingerID = fingerID;
-		mResetStartTime = Game::Util ().GetTime ();
+		mResetStartTime = Game::ContentManager ().GetTime ();
 		mIsResetStarted = false;
 		mIsAutoStartInited = false;
 	}

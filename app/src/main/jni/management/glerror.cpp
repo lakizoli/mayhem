@@ -31,7 +31,7 @@ void dump_gl_error (const char *file, int line) {
 
 		stringstream ss;
 		ss << "GL_" << error.c_str () << " - " << file << ":" << line;
-		Game::Util ().Log (ss.str ());
+		Game::ContentManager ().Log (ss.str ());
 		err = glGetError ();
 	}
 }

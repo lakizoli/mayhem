@@ -250,6 +250,16 @@ void AndroidContentManager::DisplayStatus (const string& status) const {
 	env->CallVoidMethod (jni.mActivity, jni.mDisplayStatusMethod, JavaString (status).get ());
 }
 
+void AndroidContentManager::Log (const string& log) {
+	LOGD ("%s", log.c_str ());
+}
+
+double AndroidContentManager::GetTime () const {
+	timespec now;
+	clock_gettime (CLOCK_MONOTONIC, &now);
+	return (double) now.tv_sec + (double) now.tv_nsec / 1e9;
+}
+
 jobject AndroidContentManager::openAsset (const string & asset) const {
 	JNI_ContentManager& jni = JNI_ContentManager::Get ();
 	JNIEnv* env = JNI::GetEnv ();

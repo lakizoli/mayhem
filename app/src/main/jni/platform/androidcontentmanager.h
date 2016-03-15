@@ -7,6 +7,8 @@ public:
 	AndroidContentManager (jobject activity, jobject assetManager);
 	~AndroidContentManager ();
 
+//Image interface
+public:
 	virtual Image LoadImage (const string & asset) override;
 	virtual void UnloadImage (Image& image) override;
 
@@ -15,6 +17,8 @@ public:
 	virtual int GetWidth (const Image image) const override;
 	virtual int GetHeight (const Image image) const override;
 
+//Sound interface
+public:
 	virtual int LoadSound (const string& asset) override;
 	virtual void UnloadSound (int soundID) override;
 
@@ -22,17 +26,25 @@ public:
 	virtual void StopSound (int soundID) override;
 	virtual bool IsSoundEnded (int soundID) const override;
 
+//PCM sound interface
+public:
 	virtual void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample, int deviceBufferFrames, int deviceBufferCount) override;
 	virtual void ClosePCM () override;
 	virtual bool IsOpenedPCM () const override;
 
 	virtual void WritePCM (const uint8_t* buffer, size_t size) override;
 
+//Utility interface
+public:
 	virtual string ReadFile (const string& fileName) const override;
 	virtual void WriteFile (const string& fileName, const string& content) override;
 
 	virtual void DisplayStatus (const string& status) const override;
 
+	virtual void Log (const string& log) override;
+	virtual double GetTime () const override;
+
+//Helper methods
 private:
 	jobject openAsset (const string& asset) const;
 	void closeStream (jobject istream) const;

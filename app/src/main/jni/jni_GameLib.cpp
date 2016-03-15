@@ -3,7 +3,6 @@
 #include "engine.h"
 #include "game/mayhemgame.h"
 #include "platform/androidcontentmanager.h"
-#include "platform/androidutil.h"
 #include "platform/audiomanager.h"
 #include "management/game.h"
 
@@ -180,12 +179,11 @@ static void SoundWrite (const uint8_t* buffer, size_t size) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_init (JNIEnv *env, jclass clazz, jint screenWidth, jint screenHeight, jint refWidth, jint refHeight,
 																			 jint deviceSamplingRate, jint deviceBufferFrames, jint deviceBufferCount) {
-	CHECKMSG (g_engine.util != nullptr, "g_engine.util must be initialized before GameLib init!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine.contentManager must be initialized before GameLib init!");
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine.pointerIDs must be initialized before GameLib init!");
 
 	if (!g_engine.game) {
-		g_engine.game.reset (new MayhemGame (*(g_engine.util), *(g_engine.contentManager)));
+		g_engine.game.reset (new MayhemGame (*(g_engine.contentManager)));
 		g_engine.game->Init (screenWidth, screenHeight, refWidth, refHeight);
 	}
 
@@ -312,7 +310,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_mayheminmonsterland_GameLib_touchMove
 
 extern "C" JNIEXPORT jint JNICALL Java_com_mayheminmonsterland_GameLib_runEmulator (JNIEnv *env, jclass clazz, jstring exePath, jstring diskPath) {
 	CHECKMSG (g_engine.pointerIDs != nullptr, "g_engine must be initialized before start emulator (pointerIDs)!");
-	CHECKMSG (g_engine.util != nullptr, "g_engine must be initialized before start emulator (util)!");
 	CHECKMSG (g_engine.contentManager != nullptr, "g_engine must be initialized before start emulator (contentManager)!");
 	CHECKMSG (g_engine.game != nullptr, "g_engine must be initialized before start emulator (game)!");
 
