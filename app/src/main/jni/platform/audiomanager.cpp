@@ -390,7 +390,7 @@ bool AudioManager::IsEnded (int soundID) {
 	return isEnded;
 }
 
-void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSec) {
+void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSec, int deviceBufferFrames, int deviceBufferCount) {
 	CHECKMSG (numChannels > 0, "AudioManager::OpenPCM () - numChannels must be greater than 0!");
 	CHECKMSG (sampleRate > 0, "AudioManager::OpenPCM () - sampleRate must be greater than 0!");
 	CHECKMSG (bytesPerSec > 0, "AudioManager::OpenPCM () - bytesPerSec must be greater than 0!");
@@ -401,11 +401,20 @@ void AudioManager::OpenPCM (float volume, int numChannels, int sampleRate, int b
 	mPCMWriteBufferIndex = 0;
 	mPCMVolume = volume;
 
-	mPCMs.clear ();
+	size_t bufferSize = (size_t)mPCMBytesPerSec;
+	if (deviceBufferFrames > 0) {
+		int frameSize = bytesPerSec / sampleRate;
+		bufferSize = (size_t) (deviceBufferFrames * frameSize);
+	}
 
-	size_t bufferSize = 8 * (size_t)mPCMBytesPerSec;
-	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (bufferSize)));
-	mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (bufferSize)));
+	if (deviceBufferCount < 2) //Min 2 buffer needed!
+		deviceBufferCount = 2;
+	else if (deviceBufferCount > 255) //The maximum available buffer number
+		deviceBufferCount = 255;
+
+	mPCMs.clear ();
+	for (int i = 0;i < deviceBufferCount;++i)
+		mPCMs.push_back (shared_ptr<PCMSample> (new PCMSample (bufferSize)));
 
 	mPCMPlayer.reset ();
 }

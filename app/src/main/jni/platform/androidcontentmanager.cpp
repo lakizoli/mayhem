@@ -218,9 +218,9 @@ bool AndroidContentManager::IsSoundEnded (int soundID) const {
 	return audioManager.IsEnded (soundID);
 }
 
-void AndroidContentManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSample) {
+void AndroidContentManager::OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSec, int deviceBufferFrames, int deviceBufferCount) {
 	AudioManager& audioManager = AudioManager::Get ();
-	audioManager.OpenPCM (volume, numChannels, sampleRate, bytesPerSample);
+	audioManager.OpenPCM (volume, numChannels, sampleRate, bytesPerSec, deviceBufferFrames, deviceBufferCount);
 }
 
 void AndroidContentManager::ClosePCM () {

@@ -175,7 +175,7 @@ void GameScene::Update (float elapsedTime) {
 		IContentManager& contentManager = Game::ContentManager ();
 
 		if (!contentManager.IsOpenedPCM ())
-			contentManager.OpenPCM (1.0f, g_engine.pcm_numChannels, g_engine.pcm_sampleRate, g_engine.pcm_bytesPerSec);
+			contentManager.OpenPCM (1.0f, g_engine.pcm_numChannels, g_engine.pcm_sampleRate, g_engine.pcm_bytesPerSec, g_engine.deviceBufferFrames, g_engine.deviceBufferCount);
 
 		{
 			lock_guard <recursive_mutex> lock (g_engine.pcm_lock);

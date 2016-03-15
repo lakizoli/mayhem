@@ -65,7 +65,7 @@ public:
 
 //PCM player interface (in memory)
 public:
-	void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSec);
+	void OpenPCM (float volume, int numChannels, int sampleRate, int bytesPerSec, int deviceBufferFrames, int deviceBufferCount);
 	void ClosePCM ();
 
 	bool IsOpenedPCM () const {
